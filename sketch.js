@@ -1,6 +1,6 @@
 let board = []
 let dim = 4
-let cellSize = 125
+let cellSize = 100
 let empty_row = 3
 let empty_col = 3
 let tile_col, tile_row, moveFrom, moveTo
@@ -12,16 +12,19 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(510, 510);
+  createCanvas(420, 420);
+  init()
+}
 
-  let number = 15
-  for (let i = 0; i < dim; i++) {
-      for (let j = 0; j < dim; j++) {
-          board.push(new Cell(j, i, number))
-          number--
-      }
-  }
-//   board[3][3].empty = true
+function init() {
+    board = []
+    let number = 15
+    for (let i = 0; i < dim; i++) {
+        for (let j = 0; j < dim; j++) {
+            board.push(new Cell(j, i, number))
+            number--
+        }
+    }
 }
 
 function draw() {
@@ -31,8 +34,6 @@ function draw() {
       tile.display()
   }
 }
-
-
 
 function findTile(row, col) {
     for (let tile of board) {
@@ -102,8 +103,8 @@ class Cell {
     constructor(col, row, number) {
         this.col = col
         this.row = row
-        this.x = this.col * cellSize + 5
-        this.y = this.row * cellSize + 5
+        this.x = this.col * cellSize + 10
+        this.y = this.row * cellSize + 10
         this.number =  number
     }
 
@@ -145,4 +146,8 @@ function clickedOn(tile) {
         return false
     }
     return true
+}
+
+function deviceShaken() {
+    init()
 }
