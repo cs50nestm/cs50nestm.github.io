@@ -4,11 +4,10 @@ let cellSize = 100
 let empty_row = 3
 let empty_col = 3
 let tile_col, tile_row, moveFrom, moveTo
-let swipeSound, selectSound, tileImg
+let swipeSound
 
 function preload() {
-    swipeSound = loadSound("swipe.mp3")
-    selectSound = loadSound("select.wav")
+    swipeSound = loadSound("sound.wav")
 }
 
 function setup() {
