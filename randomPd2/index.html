@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Selector Pd2</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .student-list {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        .controls {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        #studentList {
+            width: 100%;
+            height: 300px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px 0;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #saveButton {
+            background-color: #27ae60;
+        }
+        #saveButton:hover {
+            background-color: #2ecc71;
+        }
+        #selectedStudent {
+            font-size: 24px;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            min-height: 30px;
+        }
+        .highlighted {
+            background-color: #ffffcc;
+            font-weight: bold;
+        }
+        #saveStatus {
+            text-align: center;
+            margin-top: 10px;
+            color: #27ae60;
+            font-weight: bold;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Student Selector</h1>
+    
+    <div id="selectedStudent">Selected student will appear here</div>
+    
+    <div class="container">
+        <div class="student-list">
+            <h2>Student List</h2>
+            <textarea id="studentList" placeholder="Enter students, one per line..."></textarea>
+        </div>
+        
+        <div class="controls">
+            <h2>Controls</h2>
+            <button id="randomSelect">Select Random Student</button>
+            <button id="clearSelection">Clear Selection</button>
+            
+            <h3>Remove Selected Student</h3>
+            <button id="removeStudent">Remove Selected Student</button>
+
+            <h3>Save Students</h3>
+            <button id="saveButton">Save Student List</button>
+            <div id="saveStatus"></div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const studentListTextarea = document.getElementById('studentList');
+            const selectedStudentDiv = document.getElementById('selectedStudent');
+            const randomSelectBtn = document.getElementById('randomSelect');
+            const clearSelectionBtn = document.getElementById('clearSelection');
+            const saveButton = document.getElementById('saveButton');
+            const saveStatus = document.getElementById('saveStatus');
+            const removeStudentBtn = document.getElementById('removeStudent');
+            
+            let selectedStudentIndex = -1;
+            
+            // Default student list in case there's nothing in local storage
+            const defaultStudents = [
+                "John Smith",
+                "Jane Doe",
+                "Michael Johnson",
+                "Emily Williams",
+                "David Brown",
+                "Sarah Miller",
+                "Robert Wilson",
+                "Jennifer Moore"
+            ].join('\n');
+            
+            // Load students from local storage or use defaults
+            function loadStudents() {
+                const savedStudents = localStorage.getItem('studentListPd2');
+                if (savedStudents) {
+                    studentListTextarea.value = savedStudents;
+                } else {
+                    studentListTextarea.value = defaultStudents;
+                }
+            }
+            
+            // Load students when the page loads
+            loadStudents();
+            
+            // Function to get array of students from textarea
+            function getStudentArray() {
+                return studentListTextarea.value
+                    .split('\n')
+                    .filter(student => student.trim() !== '');
+            }
+            
+            // Function to select a random student
+            randomSelectBtn.addEventListener('click', function() {
+                const students = getStudentArray();
+                
+                if (students.length === 0) {
+                    selectedStudentDiv.textContent = "No students in the list!";
+                    return;
+                }
+                
+                // Select random student
+                selectedStudentIndex = Math.floor(Math.random() * students.length);
+                const selectedStudent = students[selectedStudentIndex];
+                
+                // Display the selected student
+                selectedStudentDiv.textContent = selectedStudent;
+                selectedStudentDiv.classList.add('highlighted');
+                
+                // Briefly flash the background for visual feedback
+                setTimeout(() => {
+                    selectedStudentDiv.classList.remove('highlighted');
+                }, 500);
+            });
+            
+            // Function to clear the selection
+            clearSelectionBtn.addEventListener('click', function() {
+                selectedStudentDiv.textContent = "Selected student will appear here";
+                selectedStudentIndex = -1;
+            });
+            
+            // Function to save students to local storage
+            saveButton.addEventListener('click', function() {
+                localStorage.setItem('studentListPd2', studentListTextarea.value);
+                saveStatus.textContent = "Students saved successfully!";
+                
+                // Clear the status message after 3 seconds
+                setTimeout(() => {
+                    saveStatus.textContent = "";
+                }, 3000);
+            });
+            
+            // Function to remove the selected student
+            removeStudentBtn.addEventListener('click', function() {
+                if (selectedStudentIndex === -1) {
+                    alert("Please select a student first!");
+                    return;
+                }
+                
+                const students = getStudentArray();
+                students.splice(selectedStudentIndex, 1);
+                studentListTextarea.value = students.join('\n');
+                selectedStudentDiv.textContent = "Selected student will appear here";
+                selectedStudentIndex = -1;
+            });
+        });
+    </script>
+</body>
+</html>
