@@ -221,7 +221,7 @@
 
             <div class="form-group">
                 <label for="dueDate">Due Date:</label>
-                <input type="text" id="dueDate" placeholder="e.g., 2024-03-15" required>
+                <input type="text" id="dueDate" required>
             </div>
 
             <div class="form-group">
@@ -385,6 +385,10 @@
                     if (useCurve) {
                         studentScore = calculateCurvedScore(slope, intercept, studentScore);
                     }
+
+                    // Scale score to possiblePoints
+                    const possible = parseFloat(possiblePoints) || 100;
+                    studentScore = studentScore * (possible / 100);
                     
                     classSection[studentName] = Math.round(studentScore * 10) / 10; // Round to 1 decimal
                 }
