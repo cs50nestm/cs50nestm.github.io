@@ -24,8 +24,8 @@ function init() {
             number--
         }
     }
-    board[13] = (new Cell(1, 3, 1);
-    board[14] = (new Cell(2, 3, 2);
+    board[13] = new Cell(1, 3, 1);
+    board[14] = new Cell(2, 3, 2);
 }
 
 function draw() {
