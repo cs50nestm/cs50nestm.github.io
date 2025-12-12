@@ -24,6 +24,8 @@ function init() {
             number--
         }
     }
+    board[3][1] = 1;
+    board[3][2] = 2;
 }
 
 function draw() {
