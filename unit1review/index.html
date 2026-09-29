@@ -1,1 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CS50 Intro Unit 1 Reference</title>
+<meta name="description" content="Week 1 review: C syntax, types, conditionals, loops, the command line, and practice questions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: sticky left nav of sections, content column scrolls on the right (top bar on phones). Dark code-editor look carried over from Unit 0. */
+:root {
+  --bg: #0D1117;
+  --surface: #161B22;
+  --surface2: #21262D;
+  --border: #30363D;
+  --accent: #58A6FF;
+  --accent-dim: rgba(88,166,255,0.12);
+  --green: #3FB950;
+  --green-dim: rgba(63,185,80,0.12);
+  --red: #F85149;
+  --red-dim: rgba(248,81,73,0.12);
+  --amber: #D29922;
+  --purple: #D2A8FF;
+  --text: #E6EDF3;
+  --muted: #8B949E;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  --courier: 'Courier New', Courier, monospace;
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  display: flex;
+  min-height: 100vh;
+}
+a { color: var(--accent); }
+code, pre, kbd { font-family: var(--mono); }
+/* Show operators exactly as typed: no ligatures turning <= into one symbol */
+*, *::before, *::after { font-variant-ligatures: none; font-feature-settings: "calt" 0, "liga" 0; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* NAV */
+nav.side {
+  width: 220px; flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding-block: 2rem;
+  position: sticky; top: env(safe-area-inset-top, 0px);
+  height: 100vh; overflow-y: auto;
+}
+.nav-logo {
+  font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent);
+  padding: 0 1.25rem 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; letter-spacing: 0.05em;
+}
+.nav-logo span { color: var(--muted); font-weight: 400; display: block; }
+nav.side a {
+  display: block; padding: 0.4rem 1.25rem; font-family: var(--mono); font-size: 13px;
+  color: var(--muted); text-decoration: none; border-left: 2px solid transparent;
+}
+nav.side a:hover { color: var(--text); background: var(--surface2); }
+nav.side a.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-dim); }
+
+main { flex: 1; min-width: 0; padding: 3rem clamp(16px, 4vw, 3.5rem) 5rem; }
+.wrap { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 4.5rem; }
+section { scroll-margin-top: 1.5rem; }
+
+h1, h2, h3 { font-family: var(--mono); line-height: 1.25; text-wrap: balance; margin: 0; }
+h2 { font-size: 1.5rem; display: flex; gap: 0.6rem; align-items: baseline; }
+h2 .slash { color: var(--muted); font-weight: 400; }
+h3 { font-size: 1rem; }
+.lede { color: var(--muted); max-width: 65ch; margin: 0.5rem 0 1.5rem; }
+p { margin: 0; }
+
+/* HERO */
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.hero h1 { font-size: clamp(2rem, 5vw, 3rem); margin: 0.5rem 0 1.75rem; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 1.25rem; align-items: stretch; }
+.goals { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+.goal { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.1rem 1.25rem; }
+.goal .label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; }
+.goal p { font-family: var(--courier); font-weight: 700; font-size: 1.15rem; line-height: 1.45; }
+.terminal { background: #010409; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; min-width: 0; display: flex; flex-direction: column; }
+.term-bar { display: flex; gap: 6px; padding: 0.6rem 0.8rem; background: var(--surface); border-bottom: 1px solid var(--border); align-items: center; }
+.term-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--surface2); display: block; }
+.term-bar span { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-left: 0.5rem; }
+.terminal pre { margin: 0; padding: 1rem 1.1rem; font-size: 14px; line-height: 1.8; overflow-x: auto; flex: 1; }
+.p { color: var(--green); } .o { color: var(--text); } .c { color: var(--muted); }
+.caret { display: inline-block; width: 0.6em; height: 1.1em; background: var(--accent); vertical-align: -0.2em; animation: blink 1.1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* PIPELINE */
+.pipeline { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 0.75rem; align-items: center; }
+.stage { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; min-width: 0; height: 100%; display: flex; flex-direction: column; gap: 0.5rem; }
+.stage h3 { color: var(--accent); font-size: 0.9rem; }
+.stage pre { margin: 0; font-size: 12px; background: var(--bg); border-radius: 6px; padding: 0.6rem; overflow-x: auto; color: var(--text); }
+.stage p { color: var(--muted); font-size: 0.9rem; }
+.arrow { font-family: var(--mono); color: var(--muted); text-align: center; font-size: 12px; }
+.arrow b { display: block; font-size: 1.4rem; color: var(--accent); }
+.three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1.25rem; }
+.mini { border-top: 2px solid var(--border); padding-top: 0.75rem; }
+.mini h3 { font-size: 0.95rem; margin-bottom: 0.25rem; }
+.mini p { color: var(--muted); font-size: 0.92rem; }
+
+/* CARDS */
+.cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; }
+.card h3 { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
+.card h3 small { font-weight: 400; color: var(--muted); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+.card p { color: var(--muted); font-size: 0.95rem; }
+.card pre, pre.code { margin: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 0.9rem; font-size: 13px; line-height: 1.6; overflow-x: auto; }
+.card p code, li code, td code, .lede code, .mini code, .note code, .qtext code { background: var(--surface2); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.88em; color: var(--text); }
+.kw { color: #FF7B72; } .ty { color: var(--purple); } .st { color: #A5D6FF; } .nu { color: #79C0FF; } .cm { color: var(--muted); font-style: italic; } .fn { color: #D2A8FF; }
+.warn { border-left: 3px solid var(--amber); background: rgba(210,153,34,0.08); padding: 0.6rem 0.8rem; border-radius: 0 6px 6px 0; font-size: 0.9rem; color: var(--text); }
+
+/* TABLES */
+.tbl { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); background: var(--surface); font-weight: 500; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-family: var(--mono); color: var(--accent); white-space: nowrap; }
+td.fmt { font-family: var(--mono); color: var(--green); white-space: nowrap; }
+
+/* TOOLS */
+.tool { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+.tool + .tool { margin-top: 1.25rem; }
+.tool-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.75rem; align-items: center; }
+.tabs, .btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+button {
+  font-family: var(--mono); font-size: 13px; color: var(--text); background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 6px; padding: 0.45rem 0.8rem; cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+button.on, button.primary { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.stepper { display: grid; grid-template-columns: 1.3fr 1fr; gap: 1rem; }
+.src { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0; font-family: var(--mono); font-size: 13px; overflow-x: auto; min-width: 0; }
+.src div { padding: 0.1rem 0.9rem; white-space: pre; border-left: 3px solid transparent; }
+.src div .ln { color: var(--muted); display: inline-block; width: 1.8em; user-select: none; }
+.src div.hl { background: var(--accent-dim); border-left-color: var(--accent); }
+.side-panels { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+.panel { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.7rem 0.9rem; }
+.panel .label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; }
+.vars { display: flex; flex-wrap: wrap; gap: 0.5rem; min-height: 1.8rem; }
+.var { font-family: var(--mono); font-size: 13px; background: var(--surface2); border-radius: 4px; padding: 0.15rem 0.5rem; }
+.var b { color: var(--amber); }
+.out { font-family: var(--mono); font-size: 13px; white-space: pre; min-height: 3.5rem; margin: 0; overflow-x: auto; }
+.explain { font-size: 0.95rem; min-height: 3rem; }
+.explain .t { color: var(--green); font-weight: 600; } .explain .f { color: var(--red); font-weight: 600; }
+.counter { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: center; }
+.controls label { font-family: var(--mono); font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 0.5rem; }
+input[type=range] { accent-color: var(--accent); width: 160px; }
+input[type=number] { font-family: var(--mono); font-size: 14px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 0.35rem 0.5rem; width: 6rem; }
+input[type=checkbox] { accent-color: var(--accent); }
+.pyr-grid { display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: start; }
+.pyramid { font-family: var(--mono); font-size: 18px; line-height: 1.25; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 1rem 1.25rem; margin: 0; white-space: pre; overflow-x: auto; min-width: 0; }
+.pyramid .h { color: var(--green); } .pyramid .d { color: #3B434D; }
+.rowtbl td, .rowtbl th { padding: 0.35rem 0.7rem; font-variant-numeric: tabular-nums; }
+.rowtbl td:first-child { color: var(--muted); }
+.note { color: var(--muted); font-size: 0.9rem; }
+
+.limits { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+.limits .tool + .tool { margin-top: 0; }
+.bits { display: flex; gap: 4px; flex-wrap: wrap; }
+.bit { width: 2rem; height: 2.5rem; display: grid; place-items: center; font-family: var(--mono); font-size: 1.2rem; font-weight: 700; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; }
+.bit.one { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+.big { font-family: var(--mono); font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.big.wrap { color: var(--red); }
+.digits { font-family: var(--mono); font-size: 14px; word-break: break-all; font-variant-numeric: tabular-nums; }
+.digits .ok { color: var(--green); } .digits .bad { color: var(--red); }
+
+/* QUIZ */
+.score { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.score b { color: var(--green); font-variant-numeric: tabular-nums; }
+.quiz { display: flex; flex-direction: column; gap: 1rem; }
+.q { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.8rem; }
+.q .qn { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; }
+.q .qtext { font-weight: 500; }
+.opts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+.opts button { text-align: left; font-size: 13px; padding: 0.6rem 0.8rem; white-space: pre-wrap; }
+.opts button.right { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+.opts button.wrong { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+.fb { font-size: 0.93rem; border-radius: 6px; padding: 0.6rem 0.8rem; }
+.fb.good { background: var(--green-dim); } .fb.bad { background: var(--red-dim); }
+.fb b { font-family: var(--mono); }
+
+/* RESOURCES */
+.res { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.res div { min-width: 0; }
+.res h3 { font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+.res ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.95rem; }
+.res li span { color: var(--muted); font-size: 0.85rem; }
+footer { color: var(--muted); font-family: var(--mono); font-size: 12px; border-top: 1px solid var(--border); padding-top: 1.25rem; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  body { flex-direction: column; }
+  nav.side { width: auto; height: auto; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; padding-block: 0; border-right: 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; overflow-x: auto; }
+  .nav-logo { border: 0; margin: 0; padding: 0.75rem 1rem; white-space: nowrap; }
+  .nav-logo span { display: none; }
+  nav.side a { border-left: 0; border-bottom: 2px solid transparent; white-space: nowrap; padding: 0.75rem 0.7rem; }
+  nav.side a.active { border-bottom-color: var(--accent); }
+  section { scroll-margin-top: 4rem; }
+  main { padding-top: 2rem; }
+  .hero-grid, .stepper, .limits, .pyr-grid { grid-template-columns: 1fr; }
+  .pipeline { grid-template-columns: 1fr; }
+  .arrow b { transform: rotate(90deg); }
+  .three, .res { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+  .cards, .opts, .three, .res { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav class="side" aria-label="Sections">
+  <div class="nav-logo">CS50 Intro<span>Unit 1 · C</span></div>
+  <a href="#top">Overview</a>
+  <a href="#compile">Scratch to C</a>
+  <a href="#concepts">Key Concepts</a>
+  <a href="#types">Types</a>
+  <a href="#loops">Loop Stepper</a>
+  <a href="#mario">Pyramid Lab</a>
+  <a href="#limits">Limits</a>
+  <a href="#terminal">Command Line</a>
+  <a href="#practice">Practice</a>
+  <a href="#resources">Resources</a>
+</nav>
+
+<main>
+<div class="wrap">
+
+  <!-- HERO -->
+  <section id="top" class="hero">
+    <div class="eyebrow">Unit 1 · Week 1 Review</div>
+    <h1>From blocks to <em>C</em></h1>
+    <div class="hero-grid">
+      <div class="goals">
+        <div class="goal">
+          <div class="label">Essential Question</div>
+          <p>How do we write instructions a computer can follow exactly?</p>
+        </div>
+        <div class="goal">
+          <div class="label">Learning Goal</div>
+          <p>I can write, compile, and run a C program that uses variables, conditionals, and loops.</p>
+        </div>
+      </div>
+      <div class="terminal" aria-label="Example terminal session">
+        <div class="term-bar"><i></i><i></i><i></i><span>cs50.dev · terminal</span></div>
+<pre><span class="p">$</span> <span class="o">code hello.c</span>
+<span class="p">$</span> <span class="o">make hello</span>
+<span class="p">$</span> <span class="o">./hello</span>
+<span class="o">hello, world</span>
+<span class="p">$</span> <span class="caret"></span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCRATCH TO C -->
+  <section id="compile">
+    <h2><span class="slash">//</span> Scratch to C</h2>
+    <p class="lede">In Scratch you snapped blocks together. In C you type <strong>source code</strong>, and a program called a <strong>compiler</strong> translates it into the 0s and 1s (machine code) that the computer actually runs.</p>
+    <div class="pipeline">
+      <div class="stage">
+        <h3>Source code</h3>
+<pre><span class="kw">#include</span> <span class="st">&lt;stdio.h&gt;</span>
+
+<span class="ty">int</span> <span class="fn">main</span>(<span class="ty">void</span>)
+{
+    <span class="fn">printf</span>(<span class="st">"hello, world\n"</span>);
+}</pre>
+        <p>What humans write and read. Saved in <code>hello.c</code>.</p>
+      </div>
+      <div class="arrow"><b>→</b>make hello</div>
+      <div class="stage">
+        <h3>Compiler</h3>
+<pre>make hello
+<span class="cm">(runs clang for you)</span></pre>
+        <p>Checks your syntax and translates. Errors? Fix the <em>first</em> one first.</p>
+      </div>
+      <div class="arrow"><b>→</b>./hello</div>
+      <div class="stage">
+        <h3>Machine code</h3>
+<pre>01111111 01000101
+01001100 01000110
+00000010 00000001
+...</pre>
+        <p>What the CPU runs. Binary, just like Unit 0.</p>
+      </div>
+    </div>
+    <div class="three">
+      <div class="mini"><h3>Correctness</h3><p>Does the program do what it is supposed to? <code>check50</code> tests this.</p></div>
+      <div class="mini"><h3>Design</h3><p>Is it written well? No repeated code, no wasted steps.</p></div>
+      <div class="mini"><h3>Style</h3><p>Is it easy to read? Indentation, clear names, comments. <code>style50</code> helps.</p></div>
+    </div>
+  </section>
+
+  <!-- CONCEPTS -->
+  <section id="concepts">
+    <h2><span class="slash">//</span> Key Concepts</h2>
+    <p class="lede">Every idea from Scratch has a C version. Same thinking, new syntax.</p>
+    <div class="cards">
+      <div class="card">
+        <h3>Functions <small>say block</small></h3>
+        <p>A function does a job. Some take <strong>arguments</strong> (input). Some give back a <strong>return value</strong> (output).</p>
+<pre><span class="fn">printf</span>(<span class="st">"hello, world\n"</span>);
+<span class="ty">string</span> name = <span class="fn">get_string</span>(<span class="st">"Name? "</span>);</pre>
+        <p><code>\n</code> is an <strong>escape sequence</strong> that means "new line."</p>
+      </div>
+      <div class="card">
+        <h3>Variables <small>set block</small></h3>
+        <p>A named box that holds a value. In C you must say its <strong>type</strong> first. <code>=</code> means "gets," not "equals."</p>
+<pre><span class="ty">int</span> counter = <span class="nu">0</span>;
+counter = counter + <span class="nu">1</span>;
+counter += <span class="nu">1</span>;
+counter++;   <span class="cm">// all three add 1</span></pre>
+      </div>
+      <div class="card">
+        <h3>Format codes <small>placeholders</small></h3>
+        <p><code>printf</code> fills each placeholder with the next value, in order.</p>
+<pre><span class="ty">string</span> name = <span class="st">"Ada"</span>;
+<span class="ty">int</span> age = <span class="nu">17</span>;
+<span class="fn">printf</span>(<span class="st">"%s is %i\n"</span>, name, age);
+<span class="cm">// Ada is 17</span></pre>
+      </div>
+      <div class="card">
+        <h3>Operators <small>math</small></h3>
+        <p><code>+ - * /</code> and <code>%</code> (remainder). Dividing two <code>int</code>s throws away the decimal.</p>
+<pre><span class="fn">printf</span>(<span class="st">"%i\n"</span>, <span class="nu">7</span> / <span class="nu">2</span>);    <span class="cm">// 3</span>
+<span class="fn">printf</span>(<span class="st">"%i\n"</span>, <span class="nu">7</span> % <span class="nu">2</span>);    <span class="cm">// 1</span>
+<span class="fn">printf</span>(<span class="st">"%f\n"</span>, <span class="nu">7</span> / <span class="nu">2.0</span>);  <span class="cm">// 3.500000</span></pre>
+      </div>
+      <div class="card">
+        <h3>Conditionals <small>if / else</small></h3>
+        <p>Choose a path with a <strong>Boolean expression</strong> (true or false). Compare with <code>==</code>. Combine with <code>&amp;&amp;</code> (and), <code>||</code> (or).</p>
+<pre><span class="kw">if</span> (x &lt; y)
+{
+    <span class="fn">printf</span>(<span class="st">"x is less than y\n"</span>);
+}
+<span class="kw">else if</span> (x &gt; y)
+{
+    <span class="fn">printf</span>(<span class="st">"x is greater than y\n"</span>);
+}
+<span class="kw">else</span>
+{
+    <span class="fn">printf</span>(<span class="st">"x is equal to y\n"</span>);
+}</pre>
+        <div class="warn"><code>if (x = 5)</code> assigns 5 to x. To compare, write <code>if (x == 5)</code>.</div>
+      </div>
+      <div class="card">
+        <h3>Loops <small>repeat / forever</small></h3>
+        <p><code>for</code> when you know how many times. <code>while</code> while something is true. <code>do while</code> runs at least once, which is perfect for asking the user again.</p>
+<pre><span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">0</span>; i &lt; <span class="nu">3</span>; i++)
+{
+    <span class="fn">printf</span>(<span class="st">"meow\n"</span>);
+}
+
+<span class="ty">int</span> n;
+<span class="kw">do</span>
+{
+    n = <span class="fn">get_int</span>(<span class="st">"Size: "</span>);
+}
+<span class="kw">while</span> (n &lt; <span class="nu">1</span>);</pre>
+      </div>
+      <div class="card">
+        <h3>Comments &amp; pseudocode</h3>
+        <p>Plan first in plain English, then turn each line into a comment and fill in the code under it.</p>
+<pre><span class="cm">// Prompt user for positive integer</span>
+<span class="cm">// Print that many bricks</span></pre>
+      </div>
+      <div class="card">
+        <h3>Constants &amp; magic numbers</h3>
+        <p>A number dropped into code with no explanation is a <strong>magic number</strong>. Name it with <code>const</code> so readers know what it means and it cannot change.</p>
+<pre><span class="kw">const</span> <span class="ty">int</span> MAX_HEIGHT = <span class="nu">8</span>;</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- TYPES -->
+  <section id="types">
+    <h2><span class="slash">//</span> Data Types</h2>
+    <p class="lede">The type tells C how much memory a variable needs and how to read its bits. Each type pairs with a format code for <code>printf</code>. The CS50 library adds <code>get_int</code>, <code>get_float</code>, <code>get_string</code> and friends.</p>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Type</th><th>Holds</th><th>Format</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>int</td><td>Whole numbers (about ±2 billion)</td><td class="fmt">%i</td><td><code>int score = 95;</code></td></tr>
+          <tr><td>long</td><td>Bigger whole numbers</td><td class="fmt">%li</td><td><code>long card = 4003600000000014;</code></td></tr>
+          <tr><td>float</td><td>Numbers with a decimal point</td><td class="fmt">%f</td><td><code>float price = 2.50;</code></td></tr>
+          <tr><td>double</td><td>Decimals with more precision</td><td class="fmt">%f</td><td><code>double pi = 3.14159265;</code></td></tr>
+          <tr><td>char</td><td>A single character, in single quotes</td><td class="fmt">%c</td><td><code>char answer = 'y';</code></td></tr>
+          <tr><td>string</td><td>Text, in double quotes (CS50 library)</td><td class="fmt">%s</td><td><code>string name = "Ada";</code></td></tr>
+          <tr><td>bool</td><td><code>true</code> or <code>false</code></td><td class="fmt">none</td><td><code>bool done = false;</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note" style="margin-top:0.75rem">Tip: <code>%.2f</code> prints a float with exactly 2 decimal places, handy for money.</p>
+  </section>
+
+  <!-- LOOP STEPPER -->
+  <section id="loops">
+    <h2><span class="slash">//</span> Loop Stepper</h2>
+    <p class="lede">Step through a program one line at a time. Watch the variables change and the output build up. Try to predict the next step before you click.</p>
+    <div class="tool">
+      <div class="tool-head">
+        <div class="tabs" role="tablist" id="progTabs"></div>
+        <span class="counter" id="stepCount"></span>
+      </div>
+      <div class="stepper">
+        <div class="src" id="src"></div>
+        <div class="side-panels">
+          <div class="panel"><div class="label">What just happened</div><div class="explain" id="explain"></div></div>
+          <div class="panel"><div class="label">Variables</div><div class="vars" id="vars"></div></div>
+          <div class="panel"><div class="label">Output</div><pre class="out" id="out"></pre></div>
+        </div>
+      </div>
+      <div class="btns">
+        <button id="bReset">Reset</button>
+        <button id="bBack">← Back</button>
+        <button id="bNext" class="primary">Next step →</button>
+        <button id="bEnd">Run to end</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARIO -->
+  <section id="mario">
+    <h2><span class="slash">//</span> Pyramid Lab</h2>
+    <p class="lede">Problem Set 1's Mario asks you to print a pyramid of <code>#</code>. Before you code, find the pattern: for each row, how many spaces and how many hashes? Turn on the dots to see the spaces.</p>
+    <div class="tool">
+      <div class="controls">
+        <label for="height">Height <input type="range" id="height" min="1" max="8" value="4"> <b id="hVal" style="color:var(--text)">4</b></label>
+        <div class="tabs">
+          <button id="mLess" class="on">Less comfortable</button>
+          <button id="mMore">More comfortable</button>
+        </div>
+        <label for="dots"><input type="checkbox" id="dots" checked> Show spaces as dots</label>
+      </div>
+      <div class="pyr-grid">
+        <pre class="pyramid" id="pyr"></pre>
+        <div class="tbl"><table class="rowtbl"><thead id="rowHead"></thead><tbody id="rowBody"></tbody></table></div>
+      </div>
+      <p class="note">Challenge: write each column as a formula using <code>height</code> and <code>row</code>. Those formulas become the stopping conditions of your loops.</p>
+    </div>
+  </section>
+
+  <!-- LIMITS -->
+  <section id="limits">
+    <h2><span class="slash">//</span> Limits of Computers</h2>
+    <p class="lede">Computers store numbers in a fixed number of bits. That causes two famous problems.</p>
+    <div class="limits">
+      <div class="tool">
+        <h3>Integer overflow</h3>
+        <p class="note">With only 8 bits, the biggest number is 255. Add 1 and it wraps back to 0, like a car odometer. An <code>int</code> has 32 bits, so it overflows past 2,147,483,647.</p>
+        <div class="bits" id="bits"></div>
+        <div class="big" id="bitVal">250</div>
+        <div class="btns">
+          <button id="plus1" class="primary">+ 1</button>
+          <button id="bitReset">Reset to 250</button>
+        </div>
+      </div>
+      <div class="tool">
+        <h3>Floating-point imprecision</h3>
+        <p class="note">Some decimals, like 0.1, cannot be stored exactly in binary. Print enough digits and the error shows up.</p>
+        <div class="controls">
+          <label for="fx">x <input type="number" id="fx" value="1"></label>
+          <label for="fy">y <input type="number" id="fy" value="10"></label>
+        </div>
+        <pre class="code">printf("%.20f\n", x / y);</pre>
+        <div><div class="label" style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.1em">AS A FLOAT</div><div class="digits" id="fFloat"></div></div>
+        <div><div class="label" style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.1em">AS A DOUBLE</div><div class="digits" id="fDouble"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMAND LINE -->
+  <section id="terminal">
+    <h2><span class="slash">//</span> Command Line</h2>
+    <p class="lede">In VS Code at cs50.dev you type commands into the terminal instead of clicking. This is the <strong>CLI</strong> (command-line interface), as opposed to a <strong>GUI</strong> (graphical user interface).</p>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Command</th><th>What it does</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>code</td><td>Create or open a file</td><td><code>code mario.c</code></td></tr>
+          <tr><td>make</td><td>Compile a program</td><td><code>make mario</code></td></tr>
+          <tr><td>./</td><td>Run a program in this folder</td><td><code>./mario</code></td></tr>
+          <tr><td>ls</td><td>List files in this folder</td><td><code>ls</code></td></tr>
+          <tr><td>cd</td><td>Change directory (folder)</td><td><code>cd mario-less</code>, <code>cd ..</code>, <code>cd</code></td></tr>
+          <tr><td>mkdir</td><td>Make a new folder</td><td><code>mkdir pset1</code></td></tr>
+          <tr><td>mv</td><td>Move or rename</td><td><code>mv hi.c hello.c</code></td></tr>
+          <tr><td>cp</td><td>Copy a file</td><td><code>cp hello.c me.c</code></td></tr>
+          <tr><td>rm</td><td>Remove a file (no undo!)</td><td><code>rm old.c</code></td></tr>
+          <tr><td>rmdir</td><td>Remove an empty folder</td><td><code>rmdir test</code></td></tr>
+          <tr><td>clear</td><td>Clear the screen (or Ctrl+L)</td><td><code>clear</code></td></tr>
+          <tr><td>check50</td><td>Test correctness</td><td>Command is on each problem page</td></tr>
+          <tr><td>style50</td><td>Check style</td><td><code>style50 mario.c</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note" style="margin-top:0.75rem">Tip: press ↑ to bring back your last command, and Tab to autocomplete a file name. Ctrl+C stops a program that is stuck in a loop.</p>
+  </section>
+
+  <!-- PRACTICE -->
+  <section id="practice">
+    <h2><span class="slash">//</span> Practice</h2>
+    <div class="tool-head" style="margin:0.5rem 0 1.25rem">
+      <p class="lede" style="margin:0">Predict first, then click. Every answer explains why.</p>
+      <div class="btns"><span class="score" id="score"></span><button id="qReset">Start over</button></div>
+    </div>
+    <div class="quiz" id="quiz"></div>
+  </section>
+
+  <!-- RESOURCES -->
+  <section id="resources">
+    <h2><span class="slash">//</span> Resources</h2>
+    <p class="lede">Everything for Week 1 on the CS50 AP site.</p>
+    <div class="res">
+      <div>
+        <h3>Lecture</h3>
+        <ul>
+          <li><a href="https://cs50.harvard.edu/ap/curriculum/x/weeks/1/" target="_blank" rel="noopener">Week 1 page</a></li>
+          <li><a href="https://video.cs50.io/cwtpLIWylAw?screen=o9_fiSk1cPY" target="_blank" rel="noopener">Lecture video</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/2025/curriculum/x/notes/1/" target="_blank" rel="noopener">Lecture notes</a></li>
+          <li><a href="https://cdn.cs50.net/2023/fall/lectures/1/src1/" target="_blank" rel="noopener">Source code</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/2025/curriculum/x/sections/1/" target="_blank" rel="noopener">Section</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Shorts</h3>
+        <ul>
+          <li><a href="https://cs50.harvard.edu/ap/2025/curriculum/x/shorts/data_types/" target="_blank" rel="noopener">Data Types</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/2025/curriculum/x/shorts/operators/" target="_blank" rel="noopener">Operators</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/2025/curriculum/x/shorts/conditional_statements/" target="_blank" rel="noopener">Conditional Statements</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/2025/curriculum/x/shorts/loops/" target="_blank" rel="noopener">Loops</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/2025/curriculum/x/shorts/command_line/" target="_blank" rel="noopener">Command Line</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/2025/curriculum/x/shorts/magic_numbers/" target="_blank" rel="noopener">Magic Numbers</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Problem Set 1</h3>
+        <ul>
+          <li><a href="https://cs50.harvard.edu/ap/2025/curriculum/x/psets/1/" target="_blank" rel="noopener">Problem Set 1 overview</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/2025/curriculum/x/psets/1/world/" target="_blank" rel="noopener">Hello, World</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/2025/curriculum/x/psets/1/me/" target="_blank" rel="noopener">Hello, It's Me</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/2025/curriculum/x/psets/1/mario/less/" target="_blank" rel="noopener">Mario (less)</a> <span>or</span> <a href="https://cs50.harvard.edu/ap/2025/curriculum/x/psets/1/mario/more/" target="_blank" rel="noopener">(more)</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/2025/curriculum/x/psets/1/cash/" target="_blank" rel="noopener">Cash</a> <span>or</span> <a href="https://cs50.harvard.edu/ap/2025/curriculum/x/psets/1/credit/" target="_blank" rel="noopener">Credit</a></li>
+          <li><a href="https://cs50.readthedocs.io/style/c/" target="_blank" rel="noopener">C style guide</a></li>
+          <li><a href="https://man.cs50.io/" target="_blank" rel="noopener">CS50 manual pages</a></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>CS50 Intro · Unit 1 · C</footer>
+</div>
+</main>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  /* ---------- LOOP STEPPER ---------- */
+  function T(t) { return '<span class="t">' + t + '</span>'; }
+  function F(t) { return '<span class="f">' + t + '</span>'; }
+
+  const programs = [
+    {
+      name: 'for loop',
+      lines: [
+        'for (int i = 0; i < 3; i++)',
+        '{',
+        '    printf("meow\\n");',
+        '}',
+        'printf("done\\n");'
+      ],
+      trace() {
+        const s = []; let out = '';
+        let i = 0;
+        s.push({ line: 0, vars: { i }, out, msg: 'Create <code>i</code> and set it to 0. This part runs only once.' });
+        while (true) {
+          const ok = i < 3;
+          s.push({ line: 0, vars: { i }, out, msg: 'Check the condition: is ' + i + ' &lt; 3? ' + (ok ? T('true') + ', so run the body.' : F('false') + ', so leave the loop.') });
+          if (!ok) break;
+          out += 'meow\n';
+          s.push({ line: 2, vars: { i }, out, msg: 'Print <code>meow</code>.' });
+          i++;
+          s.push({ line: 0, vars: { i }, out, msg: 'End of the body. Run <code>i++</code>, so i is now ' + i + '.' });
+        }
+        out += 'done\n';
+        s.push({ line: 4, vars: {}, out, msg: 'After the loop. <code>i</code> no longer exists here. Print <code>done</code>.' });
+        return s;
+      }
+    },
+    {
+      name: 'while loop',
+      lines: [
+        'int n = 3;',
+        'while (n > 0)',
+        '{',
+        '    printf("%i\\n", n);',
+        '    n--;',
+        '}',
+        'printf("Liftoff!\\n");'
+      ],
+      trace() {
+        const s = []; let out = ''; let n = 3;
+        s.push({ line: 0, vars: { n }, out, msg: 'Create <code>n</code> and store 3 in it.' });
+        while (true) {
+          const ok = n > 0;
+          s.push({ line: 1, vars: { n }, out, msg: 'Is ' + n + ' &gt; 0? ' + (ok ? T('true') + ', run the body.' : F('false') + ', skip past the loop.') });
+          if (!ok) break;
+          out += n + '\n';
+          s.push({ line: 3, vars: { n }, out, msg: '<code>%i</code> is replaced by the value of n, so print ' + n + '.' });
+          n--;
+          s.push({ line: 4, vars: { n }, out, msg: '<code>n--</code> subtracts 1. n is now ' + n + '. Jump back up to the condition.' });
+        }
+        out += 'Liftoff!\n';
+        s.push({ line: 6, vars: { n }, out, msg: 'The loop is over. Print <code>Liftoff!</code>.' });
+        return s;
+      }
+    },
+    {
+      name: 'nested loops',
+      lines: [
+        'for (int i = 0; i < 3; i++)',
+        '{',
+        '    for (int j = 0; j <= i; j++)',
+        '    {',
+        '        printf("#");',
+        '    }',
+        '    printf("\\n");',
+        '}'
+      ],
+      trace() {
+        const s = []; let out = ''; let i = 0;
+        s.push({ line: 0, vars: { i }, out, msg: 'Outer loop starts: <code>i</code> = 0. i is the row number.' });
+        while (true) {
+          const ok = i < 3;
+          s.push({ line: 0, vars: { i }, out, msg: 'Outer check: is ' + i + ' &lt; 3? ' + (ok ? T('true') + ', start row ' + i + '.' : F('false') + ', the program is done.') });
+          if (!ok) break;
+          let j = 0;
+          s.push({ line: 2, vars: { i, j }, out, msg: 'Inner loop starts fresh: <code>j</code> = 0.' });
+          while (true) {
+            const ok2 = j <= i;
+            s.push({ line: 2, vars: { i, j }, out, msg: 'Inner check: is ' + j + ' &lt;= ' + i + '? ' + (ok2 ? T('true') + ', print a brick.' : F('false') + ', this row is finished.') });
+            if (!ok2) break;
+            out += '#';
+            s.push({ line: 4, vars: { i, j }, out, msg: 'Print <code>#</code> (no new line yet).' });
+            j++;
+            s.push({ line: 2, vars: { i, j }, out, msg: '<code>j++</code>, so j is now ' + j + '.' });
+          }
+          out += '\n';
+          s.push({ line: 6, vars: { i }, out, msg: 'Row ' + i + ' had ' + (i + 1) + ' brick' + (i ? 's' : '') + '. Print a new line to move down.' });
+          i++;
+          s.push({ line: 0, vars: { i }, out, msg: 'Outer <code>i++</code>, so i is now ' + i + '.' });
+        }
+        return s;
+      }
+    }
+  ];
+
+  let prog = 0, steps = [], k = 0;
+  const tabs = $('progTabs');
+  programs.forEach((p, idx) => {
+    const b = document.createElement('button');
+    b.textContent = p.name; b.id = 'prog' + idx; b.setAttribute('role', 'tab');
+    b.addEventListener('click', () => load(idx));
+    tabs.appendChild(b);
+  });
+  function load(idx) {
+    prog = idx; steps = programs[idx].trace(); k = 0;
+    [...tabs.children].forEach((b, i) => { b.classList.toggle('on', i === idx); b.setAttribute('aria-selected', i === idx); });
+    render();
+  }
+  function render() {
+    const p = programs[prog], st = steps[k];
+    $('src').innerHTML = p.lines.map((l, i) => '<div class="' + (i === st.line ? 'hl' : '') + '"><span class="ln">' + (i + 1) + '</span>' + esc(l) + '</div>').join('');
+    $('explain').innerHTML = st.msg;
+    const v = Object.entries(st.vars);
+    $('vars').innerHTML = v.length ? v.map(([n, x]) => '<span class="var">' + n + ' = <b>' + x + '</b></span>').join('') : '<span class="note">(none in scope)</span>';
+    $('out').textContent = st.out;
+    $('stepCount').textContent = 'step ' + (k + 1) + ' / ' + steps.length;
+    $('bBack').disabled = k === 0; $('bReset').disabled = k === 0;
+    $('bNext').disabled = k === steps.length - 1; $('bEnd').disabled = k === steps.length - 1;
+  }
+  $('bNext').addEventListener('click', () => { if (k < steps.length - 1) { k++; render(); } });
+  $('bBack').addEventListener('click', () => { if (k > 0) { k--; render(); } });
+  $('bReset').addEventListener('click', () => { k = 0; render(); });
+  $('bEnd').addEventListener('click', () => { k = steps.length - 1; render(); });
+  load(0);
+
+  /* ---------- PYRAMID LAB ---------- */
+  let more = false;
+  function drawPyr() {
+    const h = +$('height').value, dots = $('dots').checked;
+    $('hVal').textContent = h;
+    const sp = (n) => n ? '<span class="d">' + (dots ? '·' : ' ').repeat(n) + '</span>' : '';
+    const hs = (n) => '<span class="h">' + '#'.repeat(n) + '</span>';
+    let html = '', rows = '';
+    for (let r = 0; r < h; r++) {
+      const spaces = h - r - 1, hashes = r + 1;
+      html += sp(spaces) + hs(hashes) + (more ? sp(2) + hs(hashes) : '') + '\n';
+      rows += '<tr><td>' + r + '</td><td>' + spaces + '</td><td>' + hashes + '</td>' + (more ? '<td>2</td><td>' + hashes + '</td>' : '') + '</tr>';
+    }
+    $('pyr').innerHTML = html;
+    $('rowHead').innerHTML = '<tr><th>row</th><th>spaces</th><th>#</th>' + (more ? '<th>gap</th><th>#</th>' : '') + '</tr>';
+    $('rowBody').innerHTML = rows;
+  }
+  $('height').addEventListener('input', drawPyr);
+  $('dots').addEventListener('change', drawPyr);
+  $('mLess').addEventListener('click', () => { more = false; $('mLess').classList.add('on'); $('mMore').classList.remove('on'); drawPyr(); });
+  $('mMore').addEventListener('click', () => { more = true; $('mMore').classList.add('on'); $('mLess').classList.remove('on'); drawPyr(); });
+  drawPyr();
+
+  /* ---------- OVERFLOW ---------- */
+  let val = 250, wrapped = false;
+  function drawBits() {
+    const b = val.toString(2).padStart(8, '0');
+    $('bits').innerHTML = [...b].map(c => '<div class="bit' + (c === '1' ? ' one' : '') + '">' + c + '</div>').join('');
+    $('bitVal').textContent = val + (wrapped ? '  (overflow!)' : '');
+    $('bitVal').classList.toggle('wrap', wrapped);
+  }
+  $('plus1').addEventListener('click', () => { wrapped = val === 255; val = (val + 1) % 256; drawBits(); });
+  $('bitReset').addEventListener('click', () => { val = 250; wrapped = false; drawBits(); });
+  drawBits();
+
+  /* ---------- FLOAT ---------- */
+  function markDigits(str, exact) {
+    // Color digits that match the exact decimal value green, the first mismatch onward red.
+    let i = 0;
+    while (i < str.length && i < exact.length && str[i] === exact[i]) i++;
+    return '<span class="ok">' + str.slice(0, i) + '</span><span class="bad">' + str.slice(i) + '</span>';
+  }
+  function exactDecimal(x, y, places) {
+    // Long division with integers, for the true value to compare against.
+    if (!Number.isInteger(x) || !Number.isInteger(y) || y === 0) return '';
+    const neg = (x < 0) !== (y < 0); x = Math.abs(x); y = Math.abs(y);
+    let s = (neg ? '-' : '') + Math.floor(x / y) + '.'; let r = x % y;
+    for (let i = 0; i < places; i++) { r *= 10; s += Math.floor(r / y); r %= y; }
+    return s;
+  }
+  function drawFloat() {
+    const x = parseFloat($('fx').value), y = parseFloat($('fy').value);
+    if (!isFinite(x) || !isFinite(y) || y === 0) {
+      $('fFloat').textContent = 'Enter two numbers (y cannot be 0).'; $('fDouble').textContent = ''; return;
+    }
+    const f = Math.fround(Math.fround(x) / Math.fround(y)).toFixed(20);
+    const d = (x / y).toFixed(20);
+    const ex = exactDecimal(x, y, 20);
+    $('fFloat').innerHTML = ex ? markDigits(f, ex) : esc(f);
+    $('fDouble').innerHTML = ex ? markDigits(d, ex) : esc(d);
+  }
+  $('fx').addEventListener('input', drawFloat);
+  $('fy').addEventListener('input', drawFloat);
+  drawFloat();
+
+  /* ---------- QUIZ ---------- */
+  const Q = [
+    { q: 'What does this print?', code: 'int x = 7;\nint y = 2;\nprintf("%i\\n", x / y);',
+      opts: ['3.5', '3', '4', '1'], a: 1,
+      why: 'Both x and y are <code>int</code>s, so C does integer division and throws away the .5. It does not round up.' },
+    { q: 'What does this print?', code: 'printf("%i\\n", 17 % 5);',
+      opts: ['3', '3.4', '2', '12'], a: 2,
+      why: '<code>%</code> gives the remainder. 17 ÷ 5 is 3 with 2 left over.' },
+    { q: 'How many times does this loop run?', code: 'for (int i = 1; i <= 10; i += 3)\n{\n    printf("hi\\n");\n}',
+      opts: ['3', '4', '10', '3.33'], a: 1,
+      why: 'i takes the values 1, 4, 7, 10. At 10 the condition <code>i &lt;= 10</code> is still true. Next i would be 13, which stops the loop.' },
+    { q: 'A student writes this. What happens?', code: 'int score = get_int("Score: ");\nif (score = 100)\n{\n    printf("Perfect!\\n");\n}',
+      opts: ['Prints Perfect! only for 100', 'Prints Perfect! for every score', 'Never prints anything', 'The program crashes'], a: 1,
+      why: 'A single <code>=</code> assigns 100 to score. The result, 100, is not zero, so C treats it as true every time. Use <code>==</code> to compare. (<code>make</code> will usually warn you about this.)' },
+    { q: 'Which format code prints a float?', code: 'float price = 2.5;\nprintf("___\\n", price);',
+      opts: ['%i', '%s', '%c', '%f'], a: 3,
+      why: '<code>%f</code> is for float and double. <code>%i</code> is int, <code>%s</code> is string, <code>%c</code> is char.' },
+    { q: 'What does this print?', code: 'for (int i = 0; i < 2; i++)\n{\n    for (int j = 0; j < 3; j++)\n    {\n        printf("#");\n    }\n    printf("\\n");\n}',
+      opts: ['##\n##\n##', '###\n###', '#####', '######'], a: 1,
+      why: 'The outer loop makes 2 rows. For each row, the inner loop prints 3 hashes, then a new line.' },
+    { q: 'How many times is "hi" printed?', code: 'int n = 10;\ndo\n{\n    printf("hi\\n");\n    n++;\n}\nwhile (n < 5);',
+      opts: ['0', '1', '5', 'Forever'], a: 1,
+      why: 'A <code>do while</code> runs the body first and checks the condition after. 11 &lt; 5 is false, so it stops after one time.' },
+    { q: 'What is the value of a at the end?', code: 'int a = 5;\na += 3;\na *= 2;',
+      opts: ['11', '13', '16', '10'], a: 2,
+      why: '<code>a += 3</code> makes a 8. <code>a *= 2</code> doubles it to 16.' },
+    { q: 'You saved your code in mario.c. Which command compiles it?', code: '',
+      opts: ['./mario', 'make mario', 'make mario.c', 'code mario'], a: 1,
+      why: '<code>make mario</code> compiles mario.c into a program named mario. Then <code>./mario</code> runs it. Leave off the .c when you use make.' },
+    { q: 'This prints 0.10000000149011611938 instead of 0.1. Why?', code: 'float f = 1.0 / 10;\nprintf("%.20f\\n", f);',
+      opts: ['Integer overflow', 'A typo in printf', 'Floating-point imprecision', 'Integer division'], a: 2,
+      why: 'A float has a limited number of bits, and 0.1 cannot be written exactly in binary. The computer stores the closest value it can.' },
+    { q: 'An int can hold at most 2,147,483,647. What is it called when you add 1 and get a negative number?', code: '',
+      opts: ['Floating-point imprecision', 'Integer overflow', 'A syntax error', 'Integer division'], a: 1,
+      why: 'The bits run out and the value wraps around, like the odometer in the Limits section. Use a <code>long</code> when you need bigger numbers.' },
+    { q: 'Which is the best way to remove a magic number?', code: 'for (int i = 0; i < 8; i++)',
+      opts: ['Add a comment that says // 8', 'const int MAX = 8; and use MAX', 'Change 8 to 7 + 1', 'Leave it, it works'], a: 1,
+      why: 'A named constant tells readers what the number means, and you only have to change it in one place.' }
+  ];
+  let answered = {}, correct = 0;
+  function drawQuiz() {
+    const box = $('quiz'); box.innerHTML = '';
+    Q.forEach((item, qi) => {
+      const d = document.createElement('div'); d.className = 'q';
+      d.innerHTML = '<div class="qn">Question ' + (qi + 1) + ' of ' + Q.length + '</div><div class="qtext">' + item.q + '</div>' +
+        (item.code ? '<pre class="code">' + esc(item.code) + '</pre>' : '') + '<div class="opts"></div><div class="fb" hidden></div>';
+      const opts = d.querySelector('.opts'), fb = d.querySelector('.fb');
+      item.opts.forEach((o, oi) => {
+        const b = document.createElement('button'); b.textContent = o; b.id = 'q' + qi + 'o' + oi;
+        b.addEventListener('click', () => {
+          if (answered[qi] !== undefined) return;
+          answered[qi] = oi;
+          const ok = oi === item.a; if (ok) correct++;
+          [...opts.children].forEach((btn, j) => { btn.disabled = true; if (j === item.a) btn.classList.add('right'); else if (j === oi) btn.classList.add('wrong'); });
+          fb.hidden = false; fb.className = 'fb ' + (ok ? 'good' : 'bad');
+          fb.innerHTML = '<b>' + (ok ? 'Correct.' : 'Not quite.') + '</b> ' + item.why;
+          drawScore();
+        });
+        opts.appendChild(b);
+      });
+      box.appendChild(d);
+    });
+    drawScore();
+  }
+  function drawScore() {
+    const n = Object.keys(answered).length;
+    $('score').innerHTML = 'Score <b>' + correct + '</b> / ' + n + (n === Q.length ? ' · done!' : '');
+  }
+  $('qReset').addEventListener('click', () => { answered = {}; correct = 0; drawQuiz(); });
+  drawQuiz();
+
+  /* ---------- NAV HIGHLIGHT ---------- */
+  const links = [...document.querySelectorAll('nav.side a')];
+  const secs = links.map(a => document.querySelector(a.getAttribute('href')));
+  function spy() {
+    let cur = 0;
+    secs.forEach((s, i) => { if (s && s.getBoundingClientRect().top < 140) cur = i; });
+    links.forEach((a, i) => a.classList.toggle('active', i === cur));
+  }
+  window.addEventListener('scroll', spy, { passive: true });
+  spy();
+})();
+</script>
+</body>
+</html>
