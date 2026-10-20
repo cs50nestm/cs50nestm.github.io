@@ -1,1 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CS50 Intro Unit 2 Reference</title>
+<meta name="description" content="Week 2 review: compiling, debugging, arrays, strings, command-line arguments, and practice questions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: sticky left nav of sections, content column scrolls on the right (top bar on phones). Dark code-editor look carried over from Unit 0. */
+:root {
+  --bg: #0D1117;
+  --surface: #161B22;
+  --surface2: #21262D;
+  --border: #30363D;
+  --accent: #58A6FF;
+  --accent-dim: rgba(88,166,255,0.12);
+  --green: #3FB950;
+  --green-dim: rgba(63,185,80,0.12);
+  --red: #F85149;
+  --red-dim: rgba(248,81,73,0.12);
+  --amber: #D29922;
+  --purple: #D2A8FF;
+  --text: #E6EDF3;
+  --muted: #8B949E;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  --courier: 'Courier New', Courier, monospace;
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  display: flex;
+  min-height: 100vh;
+}
+a { color: var(--accent); }
+code, pre, kbd { font-family: var(--mono); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* NAV */
+nav.side {
+  width: 220px; flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding-block: 2rem;
+  position: sticky; top: env(safe-area-inset-top, 0px);
+  height: 100vh; overflow-y: auto;
+}
+.nav-logo {
+  font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent);
+  padding: 0 1.25rem 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; letter-spacing: 0.05em;
+}
+.nav-logo span { color: var(--muted); font-weight: 400; display: block; }
+nav.side a {
+  display: block; padding: 0.4rem 1.25rem; font-family: var(--mono); font-size: 13px;
+  color: var(--muted); text-decoration: none; border-left: 2px solid transparent;
+}
+nav.side a:hover { color: var(--text); background: var(--surface2); }
+nav.side a.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-dim); }
+
+main { flex: 1; min-width: 0; padding: 3rem clamp(16px, 4vw, 3.5rem) 5rem; }
+.wrap { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 4.5rem; }
+section { scroll-margin-top: 1.5rem; }
+
+h1, h2, h3 { font-family: var(--mono); line-height: 1.25; text-wrap: balance; margin: 0; }
+h2 { font-size: 1.5rem; display: flex; gap: 0.6rem; align-items: baseline; }
+h2 .slash { color: var(--muted); font-weight: 400; }
+h3 { font-size: 1rem; }
+.lede { color: var(--muted); max-width: 65ch; margin: 0.5rem 0 1.5rem; }
+p { margin: 0; }
+
+/* HERO */
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.hero h1 { font-size: clamp(2rem, 5vw, 3rem); margin: 0.5rem 0 1.75rem; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 1.25rem; align-items: stretch; }
+.goals { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+.goal { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.1rem 1.25rem; }
+.goal .label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; }
+.goal p { font-family: var(--courier); font-weight: 700; font-size: 1.15rem; line-height: 1.45; }
+.terminal { background: #010409; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; min-width: 0; display: flex; flex-direction: column; }
+.term-bar { display: flex; gap: 6px; padding: 0.6rem 0.8rem; background: var(--surface); border-bottom: 1px solid var(--border); align-items: center; }
+.term-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--surface2); display: block; }
+.term-bar span { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-left: 0.5rem; }
+.terminal pre { margin: 0; padding: 1rem 1.1rem; font-size: 14px; line-height: 1.8; overflow-x: auto; flex: 1; }
+.p { color: var(--green); } .o { color: var(--text); } .c { color: var(--muted); }
+.caret { display: inline-block; width: 0.6em; height: 1.1em; background: var(--accent); vertical-align: -0.2em; animation: blink 1.1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* PIPELINE */
+.pipeline { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 0.75rem; align-items: center; }
+.stage { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; min-width: 0; height: 100%; display: flex; flex-direction: column; gap: 0.5rem; }
+.stage h3 { color: var(--accent); font-size: 0.9rem; }
+.stage pre { margin: 0; font-size: 12px; background: var(--bg); border-radius: 6px; padding: 0.6rem; overflow-x: auto; color: var(--text); }
+.stage p { color: var(--muted); font-size: 0.9rem; }
+.arrow { font-family: var(--mono); color: var(--muted); text-align: center; font-size: 12px; }
+.arrow b { display: block; font-size: 1.4rem; color: var(--accent); }
+.three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1.25rem; }
+.mini { border-top: 2px solid var(--border); padding-top: 0.75rem; }
+.mini h3 { font-size: 0.95rem; margin-bottom: 0.25rem; }
+.mini p { color: var(--muted); font-size: 0.92rem; }
+
+/* CARDS */
+.cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; }
+.card h3 { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
+.card h3 small { font-weight: 400; color: var(--muted); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+.card p { color: var(--muted); font-size: 0.95rem; }
+.card pre, pre.code { margin: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 0.9rem; font-size: 13px; line-height: 1.6; overflow-x: auto; }
+.card p code, li code, td code, .lede code, .mini code, .note code, .qtext code { background: var(--surface2); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.88em; color: var(--text); }
+.kw { color: #FF7B72; } .ty { color: var(--purple); } .st { color: #A5D6FF; } .nu { color: #79C0FF; } .cm { color: var(--muted); font-style: italic; } .fn { color: #D2A8FF; }
+.warn { border-left: 3px solid var(--amber); background: rgba(210,153,34,0.08); padding: 0.6rem 0.8rem; border-radius: 0 6px 6px 0; font-size: 0.9rem; color: var(--text); }
+
+/* TABLES */
+.tbl { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); background: var(--surface); font-weight: 500; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-family: var(--mono); color: var(--accent); white-space: nowrap; }
+td.fmt { font-family: var(--mono); color: var(--green); white-space: nowrap; }
+
+/* TOOLS */
+.tool { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+.tool + .tool { margin-top: 1.25rem; }
+.tool-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.75rem; align-items: center; }
+.tabs, .btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+button {
+  font-family: var(--mono); font-size: 13px; color: var(--text); background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 6px; padding: 0.45rem 0.8rem; cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+button.on, button.primary { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.stepper { display: grid; grid-template-columns: 1.3fr 1fr; gap: 1rem; }
+.src { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0; font-family: var(--mono); font-size: 13px; overflow-x: auto; min-width: 0; }
+.src div { padding: 0.1rem 0.9rem; white-space: pre; border-left: 3px solid transparent; }
+.src div .ln { color: var(--muted); display: inline-block; width: 1.8em; user-select: none; }
+.src div.hl { background: var(--accent-dim); border-left-color: var(--accent); }
+.side-panels { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+.panel { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.7rem 0.9rem; }
+.panel .label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; }
+.vars { display: flex; flex-wrap: wrap; gap: 0.5rem; min-height: 1.8rem; }
+.var { font-family: var(--mono); font-size: 13px; background: var(--surface2); border-radius: 4px; padding: 0.15rem 0.5rem; }
+.var b { color: var(--amber); }
+.out { font-family: var(--mono); font-size: 13px; white-space: pre; min-height: 3.5rem; margin: 0; overflow-x: auto; }
+.explain { font-size: 0.95rem; min-height: 3rem; }
+.explain .t { color: var(--green); font-weight: 600; } .explain .f { color: var(--red); font-weight: 600; }
+.counter { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: center; }
+.controls label { font-family: var(--mono); font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 0.5rem; }
+input[type=range] { accent-color: var(--accent); width: 160px; }
+input[type=number] { font-family: var(--mono); font-size: 14px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 0.35rem 0.5rem; width: 6rem; }
+input[type=checkbox] { accent-color: var(--accent); }
+.pyr-grid { display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: start; }
+.pyramid { font-family: var(--mono); font-size: 18px; line-height: 1.25; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 1rem 1.25rem; margin: 0; white-space: pre; overflow-x: auto; min-width: 0; }
+.pyramid .h { color: var(--green); } .pyramid .d { color: #3B434D; }
+.rowtbl td, .rowtbl th { padding: 0.35rem 0.7rem; font-variant-numeric: tabular-nums; }
+.rowtbl td:first-child { color: var(--muted); }
+.note { color: var(--muted); font-size: 0.9rem; }
+
+.limits { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+.limits .tool + .tool { margin-top: 0; }
+.bits { display: flex; gap: 4px; flex-wrap: wrap; }
+.bit { width: 2rem; height: 2.5rem; display: grid; place-items: center; font-family: var(--mono); font-size: 1.2rem; font-weight: 700; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; }
+.bit.one { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+.big { font-family: var(--mono); font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.big.wrap { color: var(--red); }
+.digits { font-family: var(--mono); font-size: 14px; word-break: break-all; font-variant-numeric: tabular-nums; }
+.digits .ok { color: var(--green); } .digits .bad { color: var(--red); }
+
+/* QUIZ */
+.score { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.score b { color: var(--green); font-variant-numeric: tabular-nums; }
+.quiz { display: flex; flex-direction: column; gap: 1rem; }
+.q { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.8rem; }
+.q .qn { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; }
+.q .qtext { font-weight: 500; }
+.opts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+.opts button { text-align: left; font-size: 13px; padding: 0.6rem 0.8rem; white-space: pre-wrap; }
+.opts button.right { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+.opts button.wrong { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+.fb { font-size: 0.93rem; border-radius: 6px; padding: 0.6rem 0.8rem; }
+.fb.good { background: var(--green-dim); } .fb.bad { background: var(--red-dim); }
+.fb b { font-family: var(--mono); }
+
+/* RESOURCES */
+.res { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.res div { min-width: 0; }
+.res h3 { font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+.res ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.95rem; }
+.res li span { color: var(--muted); font-size: 0.85rem; }
+footer { color: var(--muted); font-family: var(--mono); font-size: 12px; border-top: 1px solid var(--border); padding-top: 1.25rem; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  body { flex-direction: column; }
+  nav.side { width: auto; height: auto; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; padding-block: 0; border-right: 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; overflow-x: auto; }
+  .nav-logo { border: 0; margin: 0; padding: 0.75rem 1rem; white-space: nowrap; }
+  .nav-logo span { display: none; }
+  nav.side a { border-left: 0; border-bottom: 2px solid transparent; white-space: nowrap; padding: 0.75rem 0.7rem; }
+  nav.side a.active { border-bottom-color: var(--accent); }
+  section { scroll-margin-top: 4rem; }
+  main { padding-top: 2rem; }
+  .hero-grid, .stepper, .limits, .pyr-grid { grid-template-columns: 1fr; }
+  .pipeline { grid-template-columns: 1fr; }
+  .arrow b { transform: rotate(90deg); }
+  .three, .res { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+  .cards, .opts, .three, .res { grid-template-columns: 1fr; }
+}
+
+/* Unit 2 additions */
+*, *::before, *::after { font-variant-ligatures: none; font-feature-settings: "calt" 0, "liga" 0; }
+.pipe4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+.stage .num { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.cards.three-col { grid-template-columns: repeat(3, 1fr); }
+input[type=text] { font-family: var(--mono); font-size: 14px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 0.45rem 0.6rem; width: 100%; max-width: 22rem; }
+.controls label.field { display: flex; align-items: stretch; flex-direction: column; gap: 0.35rem; font-family: var(--mono); font-size: 13px; color: var(--muted); flex: 1 1 14rem; min-width: 0; }
+.controls label.field input { max-width: 26rem; }
+.mem { display: flex; flex-wrap: wrap; gap: 4px; }
+.cell { display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: var(--mono); }
+.cell .idx { font-size: 11px; color: var(--muted); }
+.cell .box { min-width: 2.6rem; height: 2.8rem; padding: 0 0.3rem; display: grid; place-items: center; font-size: 1.15rem; font-weight: 700; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; color: var(--accent); white-space: pre; }
+.cell .asc { font-size: 12px; color: var(--amber); font-variant-numeric: tabular-nums; }
+.cell.nul .box { color: var(--red); border-color: var(--red); background: var(--red-dim); font-size: 0.95rem; }
+.cell.sp .box { color: var(--muted); }
+#cipher td, #cipher th { white-space: nowrap; }
+.stats { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.alpha { font-family: var(--mono); font-size: 14px; display: grid; grid-template-columns: 5.5rem repeat(26, minmax(1.1rem, 1fr)); gap: 2px; overflow-x: auto; min-width: 0; }
+.alpha span { text-align: center; padding: 0.15rem 0; border-radius: 3px; }
+.alpha .lab { text-align: left; color: var(--muted); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; align-self: center; }
+.alpha .pl { background: var(--surface2); }
+.alpha .ci { background: var(--green-dim); color: var(--green); }
+.alpha .hit { outline: 1px solid var(--amber); }
+.cipher-out { font-family: var(--mono); font-size: 1.15rem; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 0.9rem; white-space: pre-wrap; word-break: break-all; }
+.cipher-out .lab { display: block; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.2rem; }
+.cipher-out b { color: var(--green); font-weight: 700; }
+.argv { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.argv .cell .box { color: var(--green); min-width: 3rem; }
+.status { font-family: var(--mono); font-size: 13px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.7rem 0.9rem; white-space: pre-wrap; }
+.status .p { color: var(--green); } .status .e { color: var(--red); }
+@media (max-width: 900px) {
+  .pipe4, .cards.three-col { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+  .pipe4, .cards.three-col { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<nav class="side" aria-label="Sections">
+  <div class="nav-logo">CS50 Intro<span>Unit 2 · Arrays</span></div>
+  <a href="#top">Overview</a>
+  <a href="#compile">Compiling</a>
+  <a href="#debug">Debugging</a>
+  <a href="#concepts">Key Concepts</a>
+  <a href="#libraries">Libraries</a>
+  <a href="#memory">String Lab</a>
+  <a href="#loops">Array Stepper</a>
+  <a href="#cipher">Cipher Lab</a>
+  <a href="#args">Command-Line Args</a>
+  <a href="#practice">Practice</a>
+  <a href="#resources">Resources</a>
+</nav>
+
+<main>
+<div class="wrap">
+
+  <!-- HERO -->
+  <section id="top" class="hero">
+    <div class="eyebrow">Unit 2 · Week 2 Review</div>
+    <h1>Inside <em>arrays</em></h1>
+    <div class="hero-grid">
+      <div class="goals">
+        <div class="goal">
+          <div class="label">Essential Question</div>
+          <p>How does a computer store and organize many pieces of data at once?</p>
+        </div>
+        <div class="goal">
+          <div class="label">Learning Goal</div>
+          <p>I can use arrays and strings to store data and loop through them to solve problems.</p>
+        </div>
+      </div>
+      <div class="terminal" aria-label="Example terminal session">
+        <div class="term-bar"><i></i><i></i><i></i><span>cs50.dev · terminal</span></div>
+<pre><span class="p">$</span> <span class="o">make caesar</span>
+<span class="p">$</span> <span class="o">./caesar 1</span>
+<span class="o">plaintext:  HELLO</span>
+<span class="o">ciphertext: IFMMP</span>
+<span class="p">$</span> <span class="caret"></span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPILING -->
+  <section id="compile">
+    <h2><span class="slash">//</span> Compiling, Up Close</h2>
+    <p class="lede">In Unit 1, <code>make</code> felt like one step. It is really four. When you type <code>make hello</code>, the compiler <code>clang</code> runs all four for you.</p>
+    <div class="pipe4">
+      <div class="stage">
+        <div class="num">Step 1</div>
+        <h3>Preprocessing</h3>
+<pre><span class="kw">#include</span> <span class="st">&lt;cs50.h&gt;</span>
+<span class="cm">// becomes</span>
+<span class="ty">string</span> <span class="fn">get_string</span>(
+  <span class="ty">string</span> prompt);</pre>
+        <p>Each <code>#include</code> line is replaced with the function prototypes from that header file.</p>
+      </div>
+      <div class="stage">
+        <div class="num">Step 2</div>
+        <h3>Compiling</h3>
+<pre>main:
+  pushq %rbp
+  movq  %rsp, %rbp
+  ...</pre>
+        <p>C is translated into <strong>assembly code</strong>, simple instructions for the CPU.</p>
+      </div>
+      <div class="stage">
+        <div class="num">Step 3</div>
+        <h3>Assembling</h3>
+<pre>01111111 01000101
+01001100 01000110
+...</pre>
+        <p>Assembly is turned into <strong>machine code</strong>: the 0s and 1s.</p>
+      </div>
+      <div class="stage">
+        <div class="num">Step 4</div>
+        <h3>Linking</h3>
+<pre>hello.c  + cs50.c
++ stdio.c → hello</pre>
+        <p>Your machine code is combined with the library code you used into one program.</p>
+      </div>
+    </div>
+    <div class="three">
+      <div class="mini"><h3>make vs. clang</h3><p><code>make hello</code> runs something like <code>clang -o hello hello.c -lcs50</code> for you.</p></div>
+      <div class="mini"><h3>Header files</h3><p>Files ending in <code>.h</code> list what a library can do, so the compiler knows the functions exist.</p></div>
+      <div class="mini"><h3>-lcs50</h3><p>Tells the linker to <strong>link</strong> in the CS50 library's code, like <code>get_string</code>.</p></div>
+    </div>
+  </section>
+
+  <!-- DEBUGGING -->
+  <section id="debug">
+    <h2><span class="slash">//</span> Debugging</h2>
+    <p class="lede">A <strong>bug</strong> is a mistake in your code. Debugging is the detective work of finding it. Use these three tools, in this order.</p>
+    <div class="cards three-col">
+      <div class="card">
+        <h3>printf <small>look inside</small></h3>
+        <p>Temporarily print the values of variables to see what your program is really doing. Delete these lines when you're done.</p>
+<pre><span class="fn">printf</span>(<span class="st">"i is %i\n"</span>, i);</pre>
+      </div>
+      <div class="card">
+        <h3>debug50 <small>step through</small></h3>
+        <p>Click left of a line number to set a red <strong>breakpoint</strong>, then run:</p>
+<pre>debug50 ./buggy</pre>
+        <p><strong>Step over</strong> runs one line. <strong>Step into</strong> goes inside a function you wrote. Watch variables change on the left.</p>
+      </div>
+      <div class="card">
+        <h3>Rubber duck <small>talk it out</small></h3>
+        <p>Explain your code, line by line, out loud to a rubber duck (or to <a href="https://cs50.ai/" target="_blank" rel="noopener">cs50.ai</a>). You often hear the bug as you say it.</p>
+      </div>
+    </div>
+    <div class="tbl" style="margin-top:1.25rem">
+      <table>
+        <thead><tr><th>You see</th><th>It usually means</th></tr></thead>
+        <tbody>
+          <tr><td>expected ';'</td><td>You forgot a semicolon at the end of the line above.</td></tr>
+          <tr><td>use of undeclared identifier</td><td>A variable is misspelled, never declared, or used outside its <strong>scope</strong> (outside its curly braces).</td></tr>
+          <tr><td>call to undeclared function</td><td>Missing <code>#include</code>, or your function is defined below <code>main</code> with no prototype above it.</td></tr>
+          <tr><td>Segmentation fault</td><td>Your program touched memory it should not, often an array index that is too big.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note" style="margin-top:0.75rem">Tip: fix the <em>first</em> error first. One mistake can cause many messages below it.</p>
+  </section>
+
+  <!-- CONCEPTS -->
+  <section id="concepts">
+    <h2><span class="slash">//</span> Key Concepts</h2>
+    <p class="lede">An <strong>array</strong> stores many values of the same type, back to back in memory. A string is just an array of characters.</p>
+    <div class="cards">
+      <div class="card">
+        <h3>Arrays <small>a list of boxes</small></h3>
+        <p>Give the type, a name, and how many. Count from <strong>0</strong>, so the last index is one less than the size.</p>
+<pre><span class="ty">int</span> scores[<span class="nu">3</span>];
+scores[<span class="nu">0</span>] = <span class="nu">72</span>;
+scores[<span class="nu">1</span>] = <span class="nu">73</span>;
+scores[<span class="nu">2</span>] = <span class="nu">33</span>;
+
+<span class="ty">int</span> scores[] = {<span class="nu">72</span>, <span class="nu">73</span>, <span class="nu">33</span>};  <span class="cm">// same thing</span></pre>
+      </div>
+      <div class="card">
+        <h3>Looping over arrays</h3>
+        <p>A <code>for</code> loop's <code>i</code> is the perfect index. This replaces three copies of the same code.</p>
+<pre><span class="kw">const</span> <span class="ty">int</span> N = <span class="nu">3</span>;
+<span class="ty">int</span> sum = <span class="nu">0</span>;
+<span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">0</span>; i &lt; N; i++)
+{
+    sum += scores[i];
+}</pre>
+        <div class="warn">C does not check your index. <code>scores[3]</code> reads past the end of the array and may crash.</div>
+      </div>
+      <div class="card">
+        <h3>Strings <small>arrays of chars</small></h3>
+        <p>A <code>string</code> is a sequence of <code>char</code>s. Use square brackets to get one character.</p>
+<pre><span class="ty">string</span> s = <span class="st">"HI!"</span>;
+<span class="fn">printf</span>(<span class="st">"%c\n"</span>, s[<span class="nu">0</span>]);   <span class="cm">// H</span>
+<span class="fn">printf</span>(<span class="st">"%c\n"</span>, s[<span class="nu">2</span>]);   <span class="cm">// !</span></pre>
+      </div>
+      <div class="card">
+        <h3>The NUL character <small>\0</small></h3>
+        <p>Every string ends with a hidden <code>'\0'</code> (all zero bits) so the computer knows where it stops. <code>"HI!"</code> takes <strong>4</strong> bytes, not 3.</p>
+<pre><span class="cm">// H   I   !   \0</span>
+<span class="cm">// 72  73  33  0</span></pre>
+      </div>
+      <div class="card">
+        <h3>String length <small>strlen</small></h3>
+        <p><code>strlen</code> counts characters until <code>'\0'</code>. Save it in <code>n</code> so it is not recalculated every time through the loop.</p>
+<pre><span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">0</span>, n = <span class="fn">strlen</span>(s); i &lt; n; i++)
+{
+    <span class="fn">printf</span>(<span class="st">"%c"</span>, s[i]);
+}</pre>
+      </div>
+      <div class="card">
+        <h3>Chars are numbers <small>ASCII</small></h3>
+        <p>Every <code>char</code> is stored as its ASCII number, so you can do math with letters. Lowercase is 32 more than uppercase.</p>
+<pre><span class="fn">printf</span>(<span class="st">"%i\n"</span>, <span class="st">'A'</span>);       <span class="cm">// 65</span>
+<span class="fn">printf</span>(<span class="st">"%c\n"</span>, <span class="st">'A'</span> + <span class="nu">1</span>);   <span class="cm">// B</span>
+<span class="fn">printf</span>(<span class="st">"%i\n"</span>, <span class="st">'C'</span> - <span class="st">'A'</span>); <span class="cm">// 2</span></pre>
+      </div>
+      <div class="card">
+        <h3>Your own functions</h3>
+        <p>Put a <strong>prototype</strong> above <code>main</code> so the compiler knows the function exists. Parameters go in, a return value comes out.</p>
+<pre><span class="ty">int</span> <span class="fn">square</span>(<span class="ty">int</span> n);   <span class="cm">// prototype</span>
+
+<span class="ty">int</span> <span class="fn">main</span>(<span class="ty">void</span>)
+{
+    <span class="fn">printf</span>(<span class="st">"%i\n"</span>, <span class="fn">square</span>(<span class="nu">5</span>));
+}
+
+<span class="ty">int</span> <span class="fn">square</span>(<span class="ty">int</span> n)
+{
+    <span class="kw">return</span> n * n;
+}</pre>
+      </div>
+      <div class="card">
+        <h3>Scope <small>where it lives</small></h3>
+        <p>A variable only exists inside the curly braces where it was created. Need it later? Declare it <em>before</em> the braces.</p>
+<pre><span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">0</span>; i &lt; <span class="nu">3</span>; i++)
+{
+    ...
+}
+<span class="fn">printf</span>(<span class="st">"%i\n"</span>, i);  <span class="cm">// error!</span></pre>
+      </div>
+      <div class="card">
+        <h3>Command-line arguments</h3>
+        <p>Words typed after the program name are passed to <code>main</code>. <code>argc</code> counts them, <code>argv</code> is an array holding them.</p>
+<pre><span class="ty">int</span> <span class="fn">main</span>(<span class="ty">int</span> argc, <span class="ty">string</span> argv[])</pre>
+      </div>
+      <div class="card">
+        <h3>Exit status</h3>
+        <p><code>main</code> returns 0 when all went well. Return a non-zero number to signal an error.</p>
+<pre><span class="kw">if</span> (argc != <span class="nu">2</span>)
+{
+    <span class="fn">printf</span>(<span class="st">"Usage: ./caesar key\n"</span>);
+    <span class="kw">return</span> <span class="nu">1</span>;
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIBRARIES -->
+  <section id="libraries">
+    <h2><span class="slash">//</span> Libraries</h2>
+    <p class="lede">Each header file unlocks a set of functions. Look any of them up at <a href="https://man.cs50.io/" target="_blank" rel="noopener">man.cs50.io</a>.</p>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Function</th><th>Header</th><th>What it does</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>get_string</td><td class="fmt">cs50.h</td><td>Ask the user for text</td><td><code>get_string("Text: ")</code></td></tr>
+          <tr><td>printf</td><td class="fmt">stdio.h</td><td>Print formatted output</td><td><code>printf("%c", c)</code></td></tr>
+          <tr><td>strlen</td><td class="fmt">string.h</td><td>Number of characters in a string</td><td><code>strlen("CS50")</code> is 4</td></tr>
+          <tr><td>isalpha</td><td class="fmt">ctype.h</td><td>Is it a letter?</td><td><code>isalpha('b')</code> is true</td></tr>
+          <tr><td>isdigit</td><td class="fmt">ctype.h</td><td>Is it a digit 0 to 9?</td><td><code>isdigit('7')</code> is true</td></tr>
+          <tr><td>isupper / islower</td><td class="fmt">ctype.h</td><td>Is it uppercase / lowercase?</td><td><code>isupper('Q')</code> is true</td></tr>
+          <tr><td>isspace / ispunct</td><td class="fmt">ctype.h</td><td>Is it a space / punctuation?</td><td><code>ispunct('!')</code> is true</td></tr>
+          <tr><td>toupper / tolower</td><td class="fmt">ctype.h</td><td>Change case (non-letters stay the same)</td><td><code>toupper('b')</code> is <code>'B'</code></td></tr>
+          <tr><td>atoi</td><td class="fmt">stdlib.h</td><td>Turn a string of digits into an int</td><td><code>atoi("13")</code> is 13</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note" style="margin-top:0.75rem">Tip: the <code>is</code> functions return a non-zero number for true and 0 for false, so use them right inside an <code>if</code>.</p>
+  </section>
+
+  <!-- STRING LAB -->
+  <section id="memory">
+    <h2><span class="slash">//</span> String Lab</h2>
+    <p class="lede">Type any string and see how it sits in memory: one <code>char</code> per box, an index above, its ASCII number below, and the <code>'\0'</code> at the end.</p>
+    <div class="tool">
+      <div class="controls">
+        <label class="field" for="sIn">string s =<input type="text" id="sIn" value="HI!" maxlength="24" autocomplete="off" spellcheck="false"></label>
+        <div class="tabs">
+          <button id="sAsIs" class="on">as typed</button>
+          <button id="sUpper">toupper</button>
+          <button id="sLower">tolower</button>
+        </div>
+      </div>
+      <div class="mem" id="mem"></div>
+      <div class="stats" id="sStats"></div>
+      <p class="note">Notice: <code>'A'</code> is 65 and <code>'a'</code> is 97, a difference of 32. A space is 32, and the digit <code>'0'</code> is 48, not 0.</p>
+    </div>
+  </section>
+
+  <!-- ARRAY STEPPER -->
+  <section id="loops">
+    <h2><span class="slash">//</span> Array Stepper</h2>
+    <p class="lede">Step through a program one line at a time. Watch the index move through the array. Try to predict the next step before you click.</p>
+    <div class="tool">
+      <div class="tool-head">
+        <div class="tabs" role="tablist" id="progTabs"></div>
+        <span class="counter" id="stepCount"></span>
+      </div>
+      <div class="stepper">
+        <div class="src" id="src"></div>
+        <div class="side-panels">
+          <div class="panel"><div class="label">What just happened</div><div class="explain" id="explain"></div></div>
+          <div class="panel"><div class="label">Variables</div><div class="vars" id="vars"></div></div>
+          <div class="panel"><div class="label">Output</div><pre class="out" id="out"></pre></div>
+        </div>
+      </div>
+      <div class="btns">
+        <button id="bReset">Reset</button>
+        <button id="bBack">← Back</button>
+        <button id="bNext" class="primary">Next step →</button>
+        <button id="bEnd">Run to end</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CIPHER LAB -->
+  <section id="cipher">
+    <h2><span class="slash">//</span> Cipher Lab</h2>
+    <p class="lede">Problem Set 2's Caesar shifts every letter by a <strong>key</strong>. Change the key and watch the alphabet slide. Find the pattern before you code it.</p>
+    <div class="tool">
+      <div class="controls">
+        <label class="field" for="pIn">plaintext<input type="text" id="pIn" value="Hello, world!" maxlength="40" autocomplete="off" spellcheck="false"></label>
+        <label for="key">key <input type="range" id="key" min="0" max="25" value="1"> <b id="kVal" style="color:var(--text)">1</b></label>
+      </div>
+      <div class="alpha" id="alpha" aria-label="Plain alphabet and shifted alphabet"></div>
+      <div class="cipher-out" id="cOut"></div>
+      <div class="tbl"><table class="rowtbl"><thead><tr><th>char</th><th>ASCII</th><th>p (A=0)</th><th>(p + key) % 26</th><th>cipher</th></tr></thead><tbody id="cBody"></tbody></table></div>
+      <p class="note">Challenge: the table shows the formula c = (p + key) % 26. How do you turn <code>'H'</code> into 7, and 8 back into <code>'I'</code>? What should happen to lowercase letters and to <code>','</code>?</p>
+    </div>
+  </section>
+
+  <!-- COMMAND-LINE ARGS -->
+  <section id="args">
+    <h2><span class="slash">//</span> Command-Line Arguments</h2>
+    <p class="lede">Type a command the way you would in the terminal. See what lands in <code>argc</code> and <code>argv</code>, and what exit status a correct Caesar program would return.</p>
+    <div class="tool">
+      <div class="controls">
+        <label class="field" for="aIn">$<input type="text" id="aIn" value="./caesar 13" autocomplete="off" spellcheck="false"></label>
+        <div class="tabs">
+          <button data-ex="./caesar 13">./caesar 13</button>
+          <button data-ex="./caesar">./caesar</button>
+          <button data-ex="./caesar 1 2">./caesar 1 2</button>
+          <button data-ex="./caesar HELLO">./caesar HELLO</button>
+        </div>
+      </div>
+      <div class="vars" id="argc"></div>
+      <div class="argv" id="argv"></div>
+      <div class="status" id="aStatus"></div>
+      <p class="note">Every argument is a <code>string</code>, even <code>"13"</code>. Check that each <code>char</code> passes <code>isdigit</code>, then use <code>atoi</code> to get the number. After a program ends, <code>echo $?</code> shows its exit status.</p>
+    </div>
+  </section>
+
+  <!-- PRACTICE -->
+  <section id="practice">
+    <h2><span class="slash">//</span> Practice</h2>
+    <div class="tool-head" style="margin:0.5rem 0 1.25rem">
+      <p class="lede" style="margin:0">Predict first, then click. Every answer explains why.</p>
+      <div class="btns"><span class="score" id="score"></span><button id="qReset">Start over</button></div>
+    </div>
+    <div class="quiz" id="quiz"></div>
+  </section>
+
+  <!-- RESOURCES -->
+  <section id="resources">
+    <h2><span class="slash">//</span> Resources</h2>
+    <p class="lede">Everything for Week 2 on the CS50 AP site.</p>
+    <div class="res">
+      <div>
+        <h3>Lecture</h3>
+        <ul>
+          <li><a href="https://cs50.harvard.edu/ap/curriculum/x/weeks/2/" target="_blank" rel="noopener">Week 2 page</a></li>
+          <li><a href="https://video.cs50.io/Y8qnryVy5sQ?screen=h1yIzzXxZiI" target="_blank" rel="noopener">Lecture video</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/curriculum/x/notes/2/" target="_blank" rel="noopener">Lecture notes</a></li>
+          <li><a href="https://cdn.cs50.net/2024/fall/lectures/2/src2/" target="_blank" rel="noopener">Source code</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/curriculum/x/sections/2/" target="_blank" rel="noopener">Section</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Shorts</h3>
+        <ul>
+          <li><a href="https://cs50.harvard.edu/ap/curriculum/x/shorts/functions/" target="_blank" rel="noopener">Functions</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/curriculum/x/shorts/variables_and_scope/" target="_blank" rel="noopener">Variables and Scope</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/curriculum/x/shorts/debugging_step_through/" target="_blank" rel="noopener">Debugging (Step Through)</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/curriculum/x/shorts/debugging_step_into/" target="_blank" rel="noopener">Debugging (Step Into)</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/curriculum/x/shorts/arrays/" target="_blank" rel="noopener">Arrays</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/curriculum/x/shorts/command_line_arguments/" target="_blank" rel="noopener">Command Line Arguments</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Problem Set 2</h3>
+        <ul>
+          <li><a href="https://cs50.harvard.edu/ap/curriculum/x/psets/2/" target="_blank" rel="noopener">Problem Set 2 overview</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/curriculum/x/psets/2/scrabble/" target="_blank" rel="noopener">Scrabble</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/curriculum/x/psets/2/readability/" target="_blank" rel="noopener">Readability</a></li>
+          <li><a href="https://cs50.harvard.edu/ap/curriculum/x/psets/2/caesar/" target="_blank" rel="noopener">Caesar</a> <span>or</span> <a href="https://cs50.harvard.edu/ap/curriculum/x/psets/2/substitution/" target="_blank" rel="noopener">Substitution</a></li>
+          <li><a href="https://cs50.readthedocs.io/style/c/" target="_blank" rel="noopener">C style guide</a></li>
+          <li><a href="https://man.cs50.io/" target="_blank" rel="noopener">CS50 manual pages</a></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>CS50 Intro · Unit 2 · Arrays</footer>
+</div>
+</main>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const show = (c) => c === '\0' ? '\\0' : c === ' ' ? '␣' : c;
+
+  /* ---------- STRING LAB ---------- */
+  let sMode = 'asis';
+  function drawMem() {
+    let s = $('sIn').value;
+    if (sMode === 'up') s = s.toUpperCase();
+    if (sMode === 'low') s = s.toLowerCase();
+    const chars = [...s, '\0'];
+    $('mem').innerHTML = chars.map((c, i) => {
+      const cls = c === '\0' ? ' nul' : c === ' ' ? ' sp' : '';
+      return '<div class="cell' + cls + '"><span class="idx">s[' + i + ']</span><span class="box">' + esc(show(c)) + '</span><span class="asc">' + c.charCodeAt(0) + '</span></div>';
+    }).join('');
+    $('sStats').innerHTML = '<span class="var">strlen(s) = <b>' + s.length + '</b></span><span class="var">bytes in memory = <b>' + (s.length + 1) + '</b></span>';
+  }
+  const sBtns = { asis: 'sAsIs', up: 'sUpper', low: 'sLower' };
+  Object.entries(sBtns).forEach(([m, id]) => $(id).addEventListener('click', () => {
+    sMode = m; Object.values(sBtns).forEach(b => $(b).classList.toggle('on', b === id)); drawMem();
+  }));
+  $('sIn').addEventListener('input', drawMem);
+  drawMem();
+
+  /* ---------- ARRAY STEPPER ---------- */
+  function T(t) { return '<span class="t">' + t + '</span>'; }
+  function F(t) { return '<span class="f">' + t + '</span>'; }
+  const arr = (a) => '{' + a.join(', ') + '}';
+  const ch = (c) => "'" + show(c) + "' (" + c.charCodeAt(0) + ')';
+
+  const programs = [
+    {
+      name: 'average',
+      lines: [
+        'int scores[] = {72, 73, 33};',
+        'int sum = 0;',
+        'for (int i = 0; i < 3; i++)',
+        '{',
+        '    sum += scores[i];',
+        '}',
+        'printf("%f\\n", sum / 3.0);'
+      ],
+      trace() {
+        const sc = [72, 73, 33], s = []; let out = '', sum = 0, i = 0;
+        s.push({ line: 0, vars: { scores: arr(sc) }, out, msg: 'Create an array of 3 ints, stored side by side in memory.' });
+        s.push({ line: 1, vars: { scores: arr(sc), sum }, out, msg: 'Create <code>sum</code> and start it at 0.' });
+        s.push({ line: 2, vars: { scores: arr(sc), sum, i }, out, msg: 'Create <code>i</code> = 0. It will be the index into the array.' });
+        while (true) {
+          const ok = i < 3;
+          s.push({ line: 2, vars: { scores: arr(sc), sum, i }, out, msg: 'Is ' + i + ' &lt; 3? ' + (ok ? T('true') + ', run the body.' : F('false') + ', leave the loop. (There is no scores[3].)') });
+          if (!ok) break;
+          const old = sum; sum += sc[i];
+          s.push({ line: 4, vars: { scores: arr(sc), sum, i, ['scores[' + i + ']']: sc[i] }, out, msg: '<code>scores[' + i + ']</code> is ' + sc[i] + '. sum was ' + old + ', now it is ' + sum + '.' });
+          i++;
+          s.push({ line: 2, vars: { scores: arr(sc), sum, i }, out, msg: '<code>i++</code>, so i is now ' + i + '.' });
+        }
+        out += (sum / 3).toFixed(6) + '\n';
+        s.push({ line: 6, vars: { scores: arr(sc), sum }, out, msg: 'Divide by <code>3.0</code> (not 3) so C keeps the decimal: ' + sum + ' / 3.0.' });
+        return s;
+      }
+    },
+    {
+      name: 'string length',
+      lines: [
+        'string s = "HI!";',
+        'int n = 0;',
+        "while (s[n] != '\\0')",
+        '{',
+        '    n++;',
+        '}',
+        'printf("%i\\n", n);'
+      ],
+      trace() {
+        const str = 'HI!\0', s = []; let out = '', n = 0;
+        const sv = '"HI!"';
+        s.push({ line: 0, vars: { s: sv }, out, msg: 'The string is stored as H, I, !, and a hidden <code>\\0</code>.' });
+        s.push({ line: 1, vars: { s: sv, n }, out, msg: '<code>n</code> will count characters. Start at 0.' });
+        while (true) {
+          const c = str[n], ok = c !== '\0';
+          s.push({ line: 2, vars: { s: sv, n, ['s[' + n + ']']: ch(c) }, out, msg: '<code>s[' + n + ']</code> is ' + esc(ch(c)) + '. Is it not <code>\\0</code>? ' + (ok ? T('true') + ', keep counting.' : F('false') + ', we found the end.') });
+          if (!ok) break;
+          n++;
+          s.push({ line: 4, vars: { s: sv, n }, out, msg: '<code>n++</code>, so n is now ' + n + '.' });
+        }
+        out += n + '\n';
+        s.push({ line: 6, vars: { s: sv, n }, out, msg: 'Print ' + n + '. This is exactly how <code>strlen</code> works.' });
+        return s;
+      }
+    },
+    {
+      name: 'uppercase',
+      lines: [
+        'string s = "hi!";',
+        'for (int i = 0, n = strlen(s); i < n; i++)',
+        '{',
+        "    if (s[i] >= 'a' && s[i] <= 'z')",
+        '    {',
+        '        printf("%c", s[i] - 32);',
+        '    }',
+        '    else',
+        '    {',
+        '        printf("%c", s[i]);',
+        '    }',
+        '}',
+        'printf("\\n");'
+      ],
+      trace() {
+        const str = 'hi!', s = []; let out = '', i = 0; const n = 3, sv = '"hi!"';
+        s.push({ line: 0, vars: { s: sv }, out, msg: 'Store the string "hi!".' });
+        s.push({ line: 1, vars: { s: sv, i, n }, out, msg: 'Create <code>i</code> = 0 and <code>n</code> = strlen(s) = 3. Both are made only once.' });
+        while (true) {
+          const ok = i < n;
+          s.push({ line: 1, vars: { s: sv, i, n }, out, msg: 'Is ' + i + ' &lt; ' + n + '? ' + (ok ? T('true') + ', look at s[' + i + '].' : F('false') + ', the loop is done.') });
+          if (!ok) break;
+          const c = str[i], low = c >= 'a' && c <= 'z';
+          s.push({ line: 3, vars: { s: sv, i, n, ['s[' + i + ']']: ch(c) }, out, msg: 'Is ' + esc(ch(c)) + ' a lowercase letter? ' + (low ? T('true') : F('false')) + '.' });
+          if (low) {
+            const u = String.fromCharCode(c.charCodeAt(0) - 32); out += u;
+            s.push({ line: 5, vars: { s: sv, i, n, ['s[' + i + ']']: ch(c) }, out, msg: c.charCodeAt(0) + ' - 32 = ' + u.charCodeAt(0) + ', which is <code>' + u + '</code>. Print it.' });
+          } else {
+            out += c;
+            s.push({ line: 9, vars: { s: sv, i, n, ['s[' + i + ']']: ch(c) }, out, msg: 'Not a lowercase letter, so print it unchanged.' });
+          }
+          i++;
+          s.push({ line: 1, vars: { s: sv, i, n }, out, msg: '<code>i++</code>, so i is now ' + i + '.' });
+        }
+        out += '\n';
+        s.push({ line: 12, vars: { s: sv }, out, msg: 'Print a new line. <code>toupper</code> from ctype.h does the same job in one call.' });
+        return s;
+      }
+    }
+  ];
+
+  let prog = 0, steps = [], k = 0;
+  const tabs = $('progTabs');
+  programs.forEach((p, idx) => {
+    const b = document.createElement('button');
+    b.textContent = p.name; b.id = 'prog' + idx; b.setAttribute('role', 'tab');
+    b.addEventListener('click', () => load(idx));
+    tabs.appendChild(b);
+  });
+  function load(idx) {
+    prog = idx; steps = programs[idx].trace(); k = 0;
+    [...tabs.children].forEach((b, i) => { b.classList.toggle('on', i === idx); b.setAttribute('aria-selected', i === idx); });
+    render();
+  }
+  function render() {
+    const p = programs[prog], st = steps[k];
+    $('src').innerHTML = p.lines.map((l, i) => '<div class="' + (i === st.line ? 'hl' : '') + '"><span class="ln">' + (i + 1) + '</span>' + esc(l) + '</div>').join('');
+    $('explain').innerHTML = st.msg;
+    const v = Object.entries(st.vars);
+    $('vars').innerHTML = v.length ? v.map(([n, x]) => '<span class="var">' + esc(n) + ' = <b>' + esc(x) + '</b></span>').join('') : '<span class="note">(none in scope)</span>';
+    $('out').textContent = st.out;
+    $('stepCount').textContent = 'step ' + (k + 1) + ' / ' + steps.length;
+    $('bBack').disabled = k === 0; $('bReset').disabled = k === 0;
+    $('bNext').disabled = k === steps.length - 1; $('bEnd').disabled = k === steps.length - 1;
+  }
+  $('bNext').addEventListener('click', () => { if (k < steps.length - 1) { k++; render(); } });
+  $('bBack').addEventListener('click', () => { if (k > 0) { k--; render(); } });
+  $('bReset').addEventListener('click', () => { k = 0; render(); });
+  $('bEnd').addEventListener('click', () => { k = steps.length - 1; render(); });
+  load(0);
+
+  /* ---------- CIPHER LAB ---------- */
+  const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  function shift(c, key) {
+    if (c >= 'A' && c <= 'Z') return String.fromCharCode((c.charCodeAt(0) - 65 + key) % 26 + 65);
+    if (c >= 'a' && c <= 'z') return String.fromCharCode((c.charCodeAt(0) - 97 + key) % 26 + 97);
+    return c;
+  }
+  function drawCipher() {
+    const key = +$('key').value, p = $('pIn').value;
+    $('kVal').textContent = key;
+    const used = new Set([...p.toUpperCase()].filter(c => c >= 'A' && c <= 'Z'));
+    let g = '<span class="lab">plain</span>' + [...A].map(c => '<span class="pl' + (used.has(c) ? ' hit' : '') + '">' + c + '</span>').join('');
+    g += '<span class="lab">cipher</span>' + [...A].map(c => '<span class="ci' + (used.has(c) ? ' hit' : '') + '">' + shift(c, key) + '</span>').join('');
+    $('alpha').innerHTML = g;
+    const c = [...p].map(x => shift(x, key)).join('');
+    $('cOut').innerHTML = '<span class="lab">ciphertext</span><b>' + esc(c) + '</b>';
+    $('cBody').innerHTML = [...p].slice(0, 16).map(x => {
+      const up = x >= 'A' && x <= 'Z', lo = x >= 'a' && x <= 'z';
+      if (!up && !lo) return '<tr><td>' + esc(show(x)) + '</td><td>' + x.charCodeAt(0) + '</td><td colspan="2">not a letter, unchanged</td><td>' + esc(show(x)) + '</td></tr>';
+      const base = up ? 65 : 97, pi = x.charCodeAt(0) - base, ci = (pi + key) % 26;
+      return '<tr><td>' + x + '</td><td>' + x.charCodeAt(0) + '</td><td>' + x.charCodeAt(0) + ' - ' + base + ' = ' + pi + '</td><td>(' + pi + ' + ' + key + ') % 26 = ' + ci + '</td><td>' + String.fromCharCode(ci + base) + '</td></tr>';
+    }).join('') + (p.length > 16 ? '<tr><td colspan="5" class="note">(first 16 characters shown)</td></tr>' : '');
+  }
+  $('key').addEventListener('input', drawCipher);
+  $('pIn').addEventListener('input', drawCipher);
+  drawCipher();
+
+  /* ---------- ARGV EXPLORER ---------- */
+  function drawArgs() {
+    const words = $('aIn').value.trim().split(/\s+/).filter(Boolean);
+    $('argc').innerHTML = '<span class="var">argc = <b>' + words.length + '</b></span>';
+    $('argv').innerHTML = words.map((w, i) => '<div class="cell"><span class="idx">argv[' + i + ']</span><span class="box">"' + esc(w) + '"</span></div>').join('');
+    let msg;
+    if (!words.length) msg = '<span class="e">Type a command, like ./caesar 13</span>';
+    else if (words.length !== 2) msg = '<span class="e">argc is ' + words.length + ', not 2.</span>\nUsage: ./caesar key\n<span class="p">$</span> echo $?\n1';
+    else if (!/^[0-9]+$/.test(words[1])) msg = '<span class="e">"' + esc(words[1]) + '" has a char that fails isdigit.</span>\nUsage: ./caesar key\n<span class="p">$</span> echo $?\n1';
+    else msg = 'Valid! key = atoi("' + esc(words[1]) + '") = ' + parseInt(words[1], 10) + '\nplaintext:  ...\n<span class="p">$</span> echo $?\n0';
+    $('aStatus').innerHTML = msg;
+  }
+  $('aIn').addEventListener('input', drawArgs);
+  document.querySelectorAll('#args [data-ex]').forEach(b => b.addEventListener('click', () => { $('aIn').value = b.dataset.ex; drawArgs(); }));
+  drawArgs();
+
+  /* ---------- QUIZ ---------- */
+  const Q = [
+    { q: 'What does this print?', code: 'int scores[3] = {72, 73, 33};\nprintf("%i\\n", scores[1]);',
+      opts: ['72', '73', '33', 'An error'], a: 1,
+      why: 'Arrays count from 0. <code>scores[0]</code> is 72, so <code>scores[1]</code> is 73.' },
+    { q: 'An array is declared as <code>int nums[5];</code>. What is the last valid index?', code: '',
+      opts: ['5', '4', '6', '0'], a: 1,
+      why: 'Five boxes are numbered 0, 1, 2, 3, 4. <code>nums[5]</code> is past the end, and C will not stop you.' },
+    { q: 'How many bytes does this string take in memory?', code: 'string s = "HI!";',
+      opts: ['2', '3', '4', '8'], a: 2,
+      why: 'Three characters plus the hidden <code>\'\\0\'</code> that marks the end: 4 bytes.' },
+    { q: 'What does this print?', code: 'printf("%i\\n", \'A\' + 1);',
+      opts: ['B', 'A1', '66', '65'], a: 2,
+      why: '<code>\'A\'</code> is stored as 65. 65 + 1 is 66, and <code>%i</code> prints it as a number. With <code>%c</code> it would print B.' },
+    { q: 'What does this print?', code: 'printf("%c\\n", \'a\' + 2);',
+      opts: ['a2', 'c', '99', 'C'], a: 1,
+      why: '<code>\'a\'</code> is 97, plus 2 is 99, and <code>%c</code> prints character 99, which is <code>c</code>.' },
+    { q: 'What does this print?', code: 'char c = \'B\';\nprintf("%i\\n", c - \'A\');',
+      opts: ['1', '2', '66', 'B'], a: 0,
+      why: '66 minus 65 is 1. Subtracting <code>\'A\'</code> turns a letter into its place in the alphabet (A is 0), which is the first step of Caesar.' },
+    { q: 'Using Caesar with a key of 3, what does <code>Z</code> become?', code: 'c = (p + key) % 26',
+      opts: [']', 'C', 'W', 'Z'], a: 1,
+      why: 'Z is 25. (25 + 3) % 26 is 2, and 2 is <code>C</code>. The <code>%</code> wraps the alphabet around.' },
+    { q: 'What does this print?', code: 'printf("%c\\n", toupper(\'3\'));',
+      opts: ['3', '#', 'An error', 'Nothing'], a: 0,
+      why: '<code>toupper</code> only changes lowercase letters. Anything else comes back unchanged.' },
+    { q: 'A user runs this command. What is <code>argc</code>?', code: '$ ./caesar 13',
+      opts: ['1', '2', '13', '3'], a: 1,
+      why: 'The program name counts. <code>argv[0]</code> is "./caesar" and <code>argv[1]</code> is "13", so argc is 2.' },
+    { q: 'In the same command, what is the type of <code>argv[1]</code>?', code: '$ ./caesar 13',
+      opts: ['int', 'char', 'string', 'bool'], a: 2,
+      why: 'Every command-line argument is a string, even "13". Use <code>atoi</code> from stdlib.h to turn it into an int.' },
+    { q: 'Which step of compiling turns assembly code into 0s and 1s?', code: '',
+      opts: ['Preprocessing', 'Compiling', 'Assembling', 'Linking'], a: 2,
+      why: 'Preprocessing handles <code>#include</code>, compiling makes assembly, <strong>assembling</strong> makes machine code, and linking joins in library code.' },
+    { q: 'Why does this fail to compile?', code: 'for (int i = 0; i < 3; i++)\n{\n    printf("hi\\n");\n}\nprintf("%i\\n", i);',
+      opts: ['Missing semicolon', 'i is out of scope', 'printf needs %s', 'The loop never runs'], a: 1,
+      why: '<code>i</code> was created inside the <code>for</code>, so it only exists there. clang reports "use of undeclared identifier \'i\'".' }
+  ];
+  let answered = {}, correct = 0;
+  function drawQuiz() {
+    const box = $('quiz'); box.innerHTML = '';
+    Q.forEach((item, qi) => {
+      const d = document.createElement('div'); d.className = 'q';
+      d.innerHTML = '<div class="qn">Question ' + (qi + 1) + ' of ' + Q.length + '</div><div class="qtext">' + item.q + '</div>' +
+        (item.code ? '<pre class="code">' + esc(item.code) + '</pre>' : '') + '<div class="opts"></div><div class="fb" hidden></div>';
+      const opts = d.querySelector('.opts'), fb = d.querySelector('.fb');
+      item.opts.forEach((o, oi) => {
+        const b = document.createElement('button'); b.textContent = o; b.id = 'q' + qi + 'o' + oi;
+        b.addEventListener('click', () => {
+          if (answered[qi] !== undefined) return;
+          answered[qi] = oi;
+          const ok = oi === item.a; if (ok) correct++;
+          [...opts.children].forEach((btn, j) => { btn.disabled = true; if (j === item.a) btn.classList.add('right'); else if (j === oi) btn.classList.add('wrong'); });
+          fb.hidden = false; fb.className = 'fb ' + (ok ? 'good' : 'bad');
+          fb.innerHTML = '<b>' + (ok ? 'Correct.' : 'Not quite.') + '</b> ' + item.why;
+          drawScore();
+        });
+        opts.appendChild(b);
+      });
+      box.appendChild(d);
+    });
+    drawScore();
+  }
+  function drawScore() {
+    const n = Object.keys(answered).length;
+    $('score').innerHTML = 'Score <b>' + correct + '</b> / ' + n + (n === Q.length ? ' · done!' : '');
+  }
+  $('qReset').addEventListener('click', () => { answered = {}; correct = 0; drawQuiz(); });
+  drawQuiz();
+
+  /* ---------- NAV HIGHLIGHT ---------- */
+  const links = [...document.querySelectorAll('nav.side a')];
+  const secs = links.map(a => document.querySelector(a.getAttribute('href')));
+  function spy() {
+    let cur = 0;
+    secs.forEach((s, i) => { if (s && s.getBoundingClientRect().top < 140) cur = i; });
+    links.forEach((a, i) => a.classList.toggle('active', i === cur));
+  }
+  window.addEventListener('scroll', spy, { passive: true });
+  spy();
+})();
+</script>
+</body>
+</html>
