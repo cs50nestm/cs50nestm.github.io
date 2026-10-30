@@ -1,0 +1,1274 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Nested Loop Stepper</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: same dark code-editor world as the Unit 1 review page. Editor card on top, stepper below (source left, panels right; one column on phones). */
+:root {
+  --bg: #0D1117;
+  --surface: #161B22;
+  --surface2: #21262D;
+  --border: #30363D;
+  --accent: #58A6FF;
+  --accent-dim: rgba(88,166,255,0.12);
+  --green: #3FB950;
+  --green-dim: rgba(63,185,80,0.14);
+  --red: #F85149;
+  --red-dim: rgba(248,81,73,0.13);
+  --amber: #D29922;
+  --amber-dim: rgba(210,153,34,0.10);
+  --purple: #D2A8FF;
+  --text: #E6EDF3;
+  --muted: #8B949E;
+  --syn-kw: #FF7B72;
+  --syn-ty: #FFA657;
+  --syn-st: #A5D6FF;
+  --syn-nu: #79C0FF;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  --courier: 'Courier New', Courier, monospace;
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; font-variant-ligatures: none; font-feature-settings: "calt" 0, "liga" 0; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 16px; line-height: 1.6; }
+a { color: var(--accent); }
+code, pre, kbd, textarea { font-family: var(--mono); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+p { margin: 0; }
+
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); }
+.topbar .in { max-width: 1120px; margin: 0 auto; padding-block: 0.8rem; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 13px; }
+.logo { color: var(--accent); font-weight: 700; letter-spacing: 0.05em; }
+.logo span { color: var(--muted); font-weight: 400; }
+.topbar a { color: var(--muted); text-decoration: none; }
+.topbar a:hover { color: var(--text); }
+
+main { padding-block: 2.5rem 5rem; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 3.5rem; }
+h1, h2, h3 { font-family: var(--mono); line-height: 1.25; text-wrap: balance; margin: 0; }
+h2 { font-size: 1.5rem; display: flex; gap: 0.6rem; align-items: baseline; }
+h2 .slash { color: var(--muted); font-weight: 400; }
+.lede { color: var(--muted); max-width: 68ch; margin: 0.5rem 0 1.25rem; }
+.lede code, .explain code, .note2 code, details code { background: var(--surface2); border-radius: 4px; padding: 0.05em 0.35em; font-size: 0.9em; color: var(--text); }
+
+/* HERO */
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.hero h1 { font-size: clamp(1.8rem, 4.5vw, 2.6rem); margin: 0.5rem 0 1.5rem; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.goals { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.goal { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.2rem; min-width: 0; }
+.goal .label, .panel .label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; }
+.goal p { font-family: var(--courier); font-weight: 700; font-size: 1.1rem; line-height: 1.45; }
+
+/* TOOL SHELL */
+.tool { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+.tool-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.75rem; align-items: center; }
+.tabs, .btns { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.tabs .hint { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-right: 0.25rem; }
+button { font-family: var(--mono); font-size: 13px; color: var(--text); background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 0.45rem 0.8rem; cursor: pointer; }
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+button.on, button.primary { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+button.big { padding: 0.6rem 1.1rem; font-size: 14px; font-weight: 700; }
+
+/* EDITOR */
+.editor { display: grid; grid-template-columns: auto minmax(0, 1fr); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; max-height: 440px; overflow-y: auto; }
+.editor:focus-within { border-color: var(--accent); }
+.gutter { margin: 0; padding: 0.75rem 0.6rem 0.75rem 0.9rem; color: var(--muted); font-size: 13px; line-height: 1.6; text-align: right; user-select: none; border-right: 1px solid var(--border); }
+.gutter .bad { color: var(--red); font-weight: 700; }
+#code { display: block; width: 100%; min-height: 12rem; resize: none; overflow-x: auto; overflow-y: hidden; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 13px; line-height: 1.6; padding: 0.75rem 0.9rem; white-space: pre; tab-size: 4; caret-color: var(--accent); }
+.run-row { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; align-items: flex-end; justify-content: space-between; }
+.field { display: flex; flex-direction: column; gap: 0.3rem; font-family: var(--mono); font-size: 12px; color: var(--muted); flex: 1 1 260px; min-width: 0; }
+.field input { font-family: var(--mono); font-size: 14px; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0.7rem; width: 100%; }
+.field input:focus { border-color: var(--accent); outline: 0; }
+.run-side { display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem; }
+.stale { font-family: var(--mono); font-size: 12px; color: var(--amber); }
+.errbox { background: var(--red-dim); border: 1px solid var(--red); border-radius: 6px; padding: 0.75rem 1rem; font-size: 15px; }
+.errbox b { font-family: var(--mono); color: var(--red); }
+.errbox pre { margin: 0.5rem 0 0; font-size: 13px; color: var(--text); white-space: pre-wrap; }
+details { font-size: 15px; color: var(--muted); }
+details summary { cursor: pointer; font-family: var(--mono); font-size: 13px; color: var(--accent); }
+details ul { margin: 0.6rem 0 0; padding-left: 1.2rem; display: grid; gap: 0.25rem; max-width: 75ch; }
+
+/* STEPPER */
+.stepper { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.src { position: relative; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0; font-family: var(--mono); font-size: 13px; line-height: 1.6; overflow: auto; max-height: 560px; min-width: 0; }
+.src div { padding: 0.05rem 0.9rem 0.05rem 0.6rem; white-space: pre; border-left: 3px solid transparent; min-height: 1.6em; }
+.src div .ln { color: var(--muted); display: inline-block; width: 2.4em; text-align: right; margin-right: 1em; user-select: none; }
+.src div.loopln { background: var(--amber-dim); border-left-color: var(--amber); }
+.src div.hl { background: var(--accent-dim); border-left-color: var(--accent); }
+.src div.err { background: var(--red-dim); border-left-color: var(--red); }
+.kw { color: var(--syn-kw); } .ty { color: var(--syn-ty); } .fn { color: var(--purple); } .st { color: var(--syn-st); } .nu { color: var(--syn-nu); } .cm, .pp { color: var(--muted); }
+.side-panels { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+.panel { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.7rem 0.9rem; min-width: 0; }
+.panel .label { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.panel .label .sub { text-transform: none; letter-spacing: 0; color: var(--purple); }
+.explain { font-size: 15px; line-height: 1.55; min-height: 3.2em; }
+.explain.error { color: var(--text); }
+.explain.error .lnchip { background: var(--red-dim); color: var(--red); border-color: var(--red); }
+.lnchip { display: inline-block; font-family: var(--mono); font-size: 11px; color: var(--accent); border: 1px solid var(--accent); background: var(--accent-dim); border-radius: 4px; padding: 0 0.4em; margin-right: 0.45em; vertical-align: 0.1em; }
+.note2 { margin-top: 0.45rem; font-size: 13.5px; color: var(--muted); border-top: 1px dashed var(--border); padding-top: 0.45rem; }
+.rows { display: flex; flex-direction: column; gap: 0.25rem; font-family: var(--mono); font-size: 13px; }
+.empty { color: var(--muted); font-family: var(--mono); font-size: 12.5px; }
+.lrow, .vrow { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.15rem 0.5rem; margin-left: calc(var(--d, 0) * 1.1rem); border-left: 2px solid var(--border); border-radius: 0 4px 4px 0; }
+.lrow { border-left-color: var(--amber); }
+.lname { color: var(--amber); font-weight: 700; }
+.lline { color: var(--muted); font-size: 12px; }
+.lpass { margin-left: auto; color: var(--text); font-variant-numeric: tabular-nums; }
+.vt { color: var(--syn-ty); min-width: 3.6em; }
+.vn { color: var(--accent); }
+.vv { margin-left: auto; font-variant-numeric: tabular-nums; padding: 0 0.35em; border-radius: 3px; white-space: pre; }
+.vrow.ch .vv, .vrow.nw .vv { background: var(--green-dim); color: var(--green); }
+.tag { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--green); }
+.out { margin: 0; font-size: 14px; line-height: 1.5; min-height: 3em; max-height: 240px; overflow: auto; white-space: pre; }
+.out .new { background: var(--green-dim); color: var(--green); border-radius: 2px; }
+.out .sp { color: var(--muted); opacity: 0.55; }
+.out .new .sp { color: var(--green); opacity: 0.8; }
+.out .cur { display: inline-block; width: 0.55em; height: 1.05em; background: var(--accent); vertical-align: -0.18em; opacity: 0.7; }
+.mini { font-size: 11px; padding: 0.15rem 0.45rem; text-transform: none; letter-spacing: 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: center; justify-content: space-between; }
+.scrub { display: flex; align-items: center; gap: 0.75rem; flex: 1 1 240px; min-width: 0; }
+.scrub input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.counter { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.keys { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+kbd { font-size: 11px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 0 0.35em; background: var(--surface2); color: var(--text); }
+
+@media (max-width: 860px) {
+  .stepper, .goals { grid-template-columns: 1fr; }
+  .src { max-height: 380px; }
+}
+@media (max-width: 520px) {
+  .run-side { align-items: stretch; width: 100%; }
+  .keys { display: none; }
+}
+</style>
+
+<header class="topbar">
+  <div class="in">
+    <div class="logo">CS50 Intro <span>· Unit 1 · Loop Lab</span></div>
+    <a href="https://cs50nestm.github.io/unit1review/">← Unit 1 Review</a>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <section class="hero">
+    <div class="eyebrow">Unit 1 · Nested Loops</div>
+    <h1>Step through <em>your own</em> loop</h1>
+    <div class="goals">
+      <div class="goal">
+        <div class="label">Essential Question</div>
+        <p>What happens, step by step, when one loop runs inside another?</p>
+      </div>
+      <div class="goal">
+        <div class="label">Learning Goal</div>
+        <p>I can trace a nested loop and predict its output before I run it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="editor-sec">
+    <h2><span class="slash">//</span> Your code</h2>
+    <p class="lede">Paste a whole program with <code>main</code>, or just the loops. Start from an example if you like, then change it and see what happens.</p>
+    <div class="tool">
+      <div class="tool-head">
+        <div class="tabs" id="exTabs"><span class="hint">Examples:</span></div>
+        <button id="bClear">Clear</button>
+      </div>
+      <div class="editor" id="editorBox">
+        <pre class="gutter" id="gutter" aria-hidden="true">1</pre>
+        <textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off" aria-label="C code to step through"></textarea>
+      </div>
+      <div class="errbox" id="errBox" hidden></div>
+      <div class="run-row">
+        <label class="field" for="inputs">Input: what the user types for get_int, get_string, and so on. Separate values with commas.
+          <input type="text" id="inputs" value="4" autocomplete="off" spellcheck="false">
+        </label>
+        <div class="run-side">
+          <span class="stale" id="stale" hidden>Your code changed. Step through it again to update.</span>
+          <button class="primary big" id="bLoad">Step through it ↓</button>
+        </div>
+      </div>
+      <details>
+        <summary>What C can this stepper run?</summary>
+        <ul>
+          <li>Variables: <code>int</code>, <code>float</code>, <code>double</code>, <code>long</code>, <code>char</code>, <code>bool</code>, <code>string</code></li>
+          <li>Loops: <code>for</code>, <code>while</code>, <code>do</code> … <code>while</code>, nested as deep as you like, plus <code>break</code> and <code>continue</code></li>
+          <li>Decisions: <code>if</code>, <code>else if</code>, <code>else</code>, and <code>&amp;&amp;</code>, <code>||</code>, <code>!</code></li>
+          <li>Math and updates: <code>+ - * / %</code>, <code>++</code>, <code>--</code>, <code>+=</code>, <code>-=</code>, <code>*=</code>, casts like <code>(float)</code></li>
+          <li><code>printf</code> with <code>%i</code>, <code>%d</code>, <code>%c</code>, <code>%s</code>, <code>%f</code>, <code>%.2f</code>, and widths like <code>%3i</code></li>
+          <li><code>get_int</code>, <code>get_float</code>, <code>get_char</code>, <code>get_string</code> (from the Input box), and functions you write yourself</li>
+          <li>Not yet: arrays, pointers, <code>switch</code>, and structs. The stepper stops after 5,000 steps in case a loop never ends.</li>
+        </ul>
+      </details>
+    </div>
+  </section>
+
+  <section id="stepper-sec">
+    <h2><span class="slash">//</span> Loop Stepper</h2>
+    <p class="lede">The blue line is the one that just ran. Amber lines are the loops you are inside right now. Before each click, predict what will change.</p>
+    <div class="tool">
+      <div class="stepper">
+        <div class="src" id="src" aria-label="Your code with the current line highlighted"></div>
+        <div class="side-panels">
+          <div class="panel"><div class="label">What just happened</div><div class="explain" id="explain" aria-live="polite"></div></div>
+          <div class="panel"><div class="label">Loops running</div><div class="rows" id="loops"></div></div>
+          <div class="panel"><div class="label"><span>Variables</span><span class="sub" id="frame"></span></div><div class="rows" id="vars"></div></div>
+          <div class="panel"><div class="label"><span>Output</span><button class="mini on" id="bSpaces" aria-pressed="true">spaces as ·</button></div><pre class="out" id="out"></pre></div>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="btns">
+          <button id="bReset">Reset</button>
+          <button id="bBack">← Back</button>
+          <button id="bNext" class="primary">Next step →</button>
+          <button id="bPlay">Play</button>
+          <button id="bEnd">Run to end</button>
+        </div>
+        <div class="scrub">
+          <input type="range" id="scrub" min="0" max="0" value="0" aria-label="Jump to step">
+          <span class="counter" id="count"></span>
+        </div>
+      </div>
+      <div class="keys">Keyboard: <kbd>←</kbd> back, <kbd>→</kbd> next</div>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<!-- Example programs -->
+<script type="text/plain" id="ex-Grid" data-input="">#include <stdio.h>
+
+int main(void)
+{
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            printf("#");
+        }
+        printf("\n");
+    }
+}</script>
+<script type="text/plain" id="ex-Triangle" data-input="">// Just the loops, no main needed.
+for (int row = 1; row <= 4; row++)
+{
+    for (int col = 0; col < row; col++)
+    {
+        printf("*");
+    }
+    printf("\n");
+}</script>
+<script type="text/plain" id="ex-Times table" data-input="">#include <stdio.h>
+
+int main(void)
+{
+    for (int i = 1; i <= 3; i++)
+    {
+        for (int j = 1; j <= 4; j++)
+        {
+            printf("%3i", i * j);
+        }
+        printf("\n");
+    }
+}</script>
+<script type="text/plain" id="ex-Diagonal" data-input="4">#include <cs50.h>
+#include <stdio.h>
+
+int main(void)
+{
+    int size = get_int("Size: ");
+    for (int i = 0; i < size; i++)
+    {
+        for (int j = 0; j < size; j++)
+        {
+            if (i == j)
+            {
+                printf("\\");
+            }
+            else
+            {
+                printf(".");
+            }
+        }
+        printf("\n");
+    }
+}</script>
+<script type="text/plain" id="ex-While loops" data-input="">#include <stdio.h>
+
+int main(void)
+{
+    int n = 3;
+    while (n > 0)
+    {
+        int k = 0;
+        while (k < n)
+        {
+            printf("%i ", n);
+            k++;
+        }
+        printf("\n");
+        n--;
+    }
+}</script>
+
+<script>
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------- C subset: tokenizer ---------- */
+const TYPES = new Set(['int', 'float', 'double', 'char', 'bool', 'long', 'string', 'void', 'unsigned', 'short', 'const', 'signed']);
+const KEYWORDS = new Set(['for', 'while', 'do', 'if', 'else', 'return', 'break', 'continue', 'switch', 'case', 'struct', 'typedef', 'default']);
+const ASSIGN = new Set(['=', '+=', '-=', '*=', '/=', '%=']);
+class CErr extends Error { constructor(line, msg) { super(msg); this.line = line; } }
+const STOP = { stop: true };
+const LIMIT = 5000;
+
+function tokenize(src) {
+  const toks = []; let i = 0, line = 1;
+  const two = ['++', '--', '+=', '-=', '*=', '/=', '%=', '==', '!=', '<=', '>=', '&&', '||', '->', '<<', '>>'];
+  const one = '+-*/%<>=!&|^~?:;,(){}[].';
+  while (i < src.length) {
+    const c = src[i];
+    if (c === '\n') { line++; i++; continue; }
+    if (/\s/.test(c)) { i++; continue; }
+    if (c === '/' && src[i + 1] === '/') { while (i < src.length && src[i] !== '\n') i++; continue; }
+    if (c === '/' && src[i + 1] === '*') {
+      const start = line; i += 2;
+      while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) { if (src[i] === '\n') line++; i++; }
+      if (i >= src.length) throw new CErr(start, 'This /* comment never gets its closing */.');
+      i += 2; continue;
+    }
+    if (c === '#') { while (i < src.length && src[i] !== '\n') i++; continue; }
+    if (/[A-Za-z_]/.test(c)) {
+      let j = i; while (j < src.length && /\w/.test(src[j])) j++;
+      toks.push({ t: 'id', v: src.slice(i, j), line }); i = j; continue;
+    }
+    if (/[0-9]/.test(c) || (c === '.' && /[0-9]/.test(src[i + 1] || ''))) {
+      let j = i; while (j < src.length && /[0-9.]/.test(src[j])) j++;
+      const txt = src.slice(i, j); let f = txt.includes('.');
+      if ((txt.match(/\./g) || []).length > 1) throw new CErr(line, `"${txt}" is not a valid number.`);
+      if (src[j] === 'f' || src[j] === 'F') { f = true; j++; }
+      while (/[lLuU]/.test(src[j] || '')) j++;
+      if (/[A-Za-z_]/.test(src[j] || '')) throw new CErr(line, `A variable name can't start with a digit: "${src.slice(i, j + 1)}…".`);
+      toks.push({ t: 'num', v: parseFloat(txt), f, raw: src.slice(i, j), line }); i = j; continue;
+    }
+    if (c === '"' || c === "'") {
+      const q = c; let j = i + 1, s = '';
+      while (j < src.length && src[j] !== q) {
+        if (src[j] === '\n') throw new CErr(line, q === '"' ? 'This string is missing its closing " quote.' : "This char is missing its closing ' quote.");
+        if (src[j] === '\\') {
+          const e = src[j + 1]; const map = { n: '\n', t: '\t', '\\': '\\', '"': '"', "'": "'", '0': '\0', r: '\r', a: '\x07' };
+          if (!(e in map)) throw new CErr(line, `"\\${e}" is not an escape sequence C knows. Did you mean \\n?`);
+          s += map[e]; j += 2;
+        } else { s += src[j]; j++; }
+      }
+      if (j >= src.length) throw new CErr(line, q === '"' ? 'This string is missing its closing " quote.' : "This char is missing its closing ' quote.");
+      j++;
+      if (q === "'") {
+        if (s.length !== 1) throw new CErr(line, `A char holds exactly one character, like 'A'. For text, use double quotes: "${s}".`);
+        toks.push({ t: 'chr', v: s.charCodeAt(0), line });
+      } else toks.push({ t: 'str', v: s, line });
+      i = j; continue;
+    }
+    const d = src.substr(i, 2);
+    if (two.includes(d)) { toks.push({ t: 'op', v: d, line }); i += 2; continue; }
+    if (one.includes(c)) { toks.push({ t: 'op', v: c, line }); i++; continue; }
+    throw new CErr(line, `I don't understand the character "${c}".`);
+  }
+  return toks;
+}
+const tokText = t => t.t === 'eof' ? 'the end of the code' : t.t === 'str' ? qstr(t.v) : t.t === 'chr' ? qchr(t.v) : (t.raw ?? t.v);
+
+/* ---------- parser ---------- */
+function parse(toks) {
+  let p = 0;
+  const lastLine = toks.length ? toks[toks.length - 1].line : 1;
+  const peek = (k = 0) => toks[p + k] || { t: 'eof', v: '', line: lastLine };
+  const next = () => { const t = peek(); p++; return t; };
+  const is = (v, k = 0) => { const t = peek(k); return (t.t === 'op' || t.t === 'id') && t.v === v; };
+  const accept = v => { if (is(v)) { p++; return true; } return false; };
+  const prevLine = () => (toks[p - 1] || peek()).line;
+  const expect = (v, msg) => {
+    if (accept(v)) return;
+    if (v === ';') throw new CErr(prevLine(), msg || 'This line is missing a semicolon ; at the end.');
+    const t = peek();
+    throw new CErr(t.line, msg || `Expected "${v}" here, but found ${t.t === 'eof' ? 'the end of the code' : `"${tokText(t)}"`}.`);
+  };
+  const isTypeAt = (k = 0) => { const t = peek(k); return t.t === 'id' && TYPES.has(t.v); };
+  const noArrays = () => { if (is('[')) throw new CErr(peek().line, 'Arrays come in Unit 2. This stepper handles plain variables like int and char.'); };
+
+  function parseType() {
+    let base = null;
+    while (isTypeAt()) {
+      const v = next().v;
+      if (v === 'const' || v === 'unsigned' || v === 'signed') continue;
+      if (v === 'long' || v === 'short') { base = base || v; continue; }
+      base = (base === 'long' && v === 'double') ? 'double' : v;
+    }
+    if (is('*')) throw new CErr(peek().line, 'Pointers come later in CS50. This stepper handles plain variables.');
+    return base || 'int';
+  }
+  function parseBlock() {
+    const line = peek().line; expect('{');
+    const body = [];
+    while (!is('}')) {
+      if (peek().t === 'eof') throw new CErr(line, 'This { never gets a matching }.');
+      body.push(parseStatement());
+    }
+    const endLine = peek().line; next();
+    return { k: 'block', body, line, endLine };
+  }
+  function parseDecl() {
+    const line = peek().line; const type = parseType();
+    if (type === 'void') throw new CErr(line, 'A variable cannot have type void.');
+    const items = [];
+    do {
+      const nt = next();
+      if (nt.t !== 'id' || TYPES.has(nt.v) || KEYWORDS.has(nt.v)) throw new CErr(nt.line, `Expected a variable name after ${type}${nt.t === 'eof' ? '' : `, but found "${tokText(nt)}"`}.`);
+      noArrays();
+      let init = null;
+      if (accept('=')) init = parseAssign();
+      items.push({ name: nt.v, init, line: nt.line });
+    } while (accept(','));
+    expect(';');
+    return { k: 'decl', type, items, line };
+  }
+  function parseStatement() {
+    const t = peek(); const line = t.line;
+    if (t.t === 'eof') throw new CErr(line, 'The code ended too soon. Is a } or ; missing?');
+    if (is('{')) return parseBlock();
+    if (accept(';')) return { k: 'empty', line };
+    if (t.t === 'id') {
+      switch (t.v) {
+        case 'for': {
+          next(); expect('(', 'A for loop needs ( right after the word for.');
+          let init = null;
+          if (!accept(';')) {
+            if (isTypeAt()) init = parseDecl();
+            else { init = { k: 'expr', e: parseSeq(), line }; expect(';', 'A for loop needs two semicolons inside the parentheses: for (start; condition; update).'); }
+          }
+          let cond = null;
+          if (!is(';')) cond = parseExpr();
+          expect(';', 'A for loop needs two semicolons inside the parentheses: for (start; condition; update).');
+          let upd = null;
+          if (!is(')')) upd = parseSeq();
+          expect(')', 'The for loop needs a ) to close its parentheses.');
+          if (is(';')) throw new CErr(peek().line, 'There is a ; right after the for (...). That gives the loop an empty body, so the { } block below would run only once. Remove that semicolon.');
+          return { k: 'for', init, cond, upd, body: parseStatement(), line };
+        }
+        case 'while': {
+          next(); expect('(', 'A while loop needs ( right after the word while.');
+          const cond = parseExpr(); expect(')', 'The while condition needs a ) to close it.');
+          if (is(';')) throw new CErr(peek().line, 'There is a ; right after while (...). That makes an empty loop body. Remove that semicolon.');
+          return { k: 'while', cond, body: parseStatement(), line };
+        }
+        case 'do': {
+          next(); const body = parseStatement(); const wline = peek().line;
+          if (!accept('while')) throw new CErr(wline, 'A do loop needs while (condition); after its body.');
+          expect('('); const cond = parseExpr(); expect(')'); expect(';');
+          return { k: 'do', body, cond, line, wline };
+        }
+        case 'if': {
+          next(); expect('(', 'An if needs ( right after the word if.');
+          const cond = parseExpr(); expect(')', 'The if condition needs a ) to close it.');
+          if (is(';')) throw new CErr(peek().line, 'There is a ; right after if (...). That ends the if before its block. Remove that semicolon.');
+          const then = parseStatement();
+          let els = null;
+          if (accept('else')) els = parseStatement();
+          return { k: 'if', cond, then, els, line };
+        }
+        case 'else': throw new CErr(line, 'This else has no matching if right before it.');
+        case 'break': next(); expect(';'); return { k: 'break', line };
+        case 'continue': next(); expect(';'); return { k: 'continue', line };
+        case 'return': { next(); const e = is(';') ? null : parseExpr(); expect(';'); return { k: 'return', e, line }; }
+        case 'switch': throw new CErr(line, 'switch is not supported here yet. Try if / else if / else instead.');
+        case 'struct': case 'typedef': throw new CErr(line, 'Structs come later in CS50. This stepper handles plain variables.');
+      }
+      if (isTypeAt()) return parseDecl();
+      if (peek(1).t === 'id' && !KEYWORDS.has(t.v)) throw new CErr(line, `I don't know the type "${t.v}". Try int, float, char, bool, or string.`);
+    }
+    const e = parseSeq();
+    expect(';');
+    return { k: 'expr', e, line };
+  }
+  function parseSeq() { const list = [parseExpr()]; while (accept(',')) list.push(parseExpr()); return list.length === 1 ? list[0] : { k: 'seq', list }; }
+  function parseExpr() { return parseAssign(); }
+  function parseAssign() {
+    const left = parseTernary();
+    if (peek().t === 'op' && ASSIGN.has(peek().v)) {
+      const op = next();
+      if (left.k !== 'var') throw new CErr(op.line, `The left side of ${op.v} must be a variable name.`);
+      return { k: 'assign', op: op.v, name: left.name, value: parseAssign() };
+    }
+    return left;
+  }
+  function parseTernary() {
+    const c = parseBin(0);
+    if (accept('?')) { const a = parseAssign(); expect(':'); const b = parseTernary(); return { k: 'cond', c, a, b }; }
+    return c;
+  }
+  const levels = [['||'], ['&&'], ['==', '!='], ['<', '>', '<=', '>='], ['+', '-'], ['*', '/', '%']];
+  function parseBin(l) {
+    if (l === levels.length) return parseUnary();
+    let a = parseBin(l + 1);
+    while (peek().t === 'op' && levels[l].includes(peek().v)) { const op = next().v; a = { k: 'bin', op, a, b: parseBin(l + 1) }; }
+    if (peek().t === 'op' && (peek().v === '&' || peek().v === '|') && l === 0) throw new CErr(peek().line, `A single ${peek().v} is a bitwise operator. For "and" use &&, for "or" use ||.`);
+    return a;
+  }
+  function parseUnary() {
+    const t = peek();
+    if (t.t === 'op') {
+      if (t.v === '!' || t.v === '-' || t.v === '+') { next(); return { k: 'un', op: t.v, arg: parseUnary() }; }
+      if (t.v === '++' || t.v === '--') { next(); const a = parseUnary(); if (a.k !== 'var') throw new CErr(t.line, `${t.v} only works on a variable.`); return { k: 'pre', op: t.v, name: a.name }; }
+      if (t.v === '(' && isTypeAt(1)) { next(); const type = parseType(); expect(')'); return { k: 'cast', type, arg: parseUnary() }; }
+      if (t.v === '&' || t.v === '*') throw new CErr(t.line, 'Pointers come later in CS50. This stepper handles plain variables.');
+    }
+    return parsePostfix();
+  }
+  function parsePostfix() {
+    let e = parsePrimary();
+    while (is('++') || is('--')) {
+      const t = next();
+      if (e.k !== 'var') throw new CErr(t.line, `${t.v} only works on a variable.`);
+      e = { k: 'post', op: t.v, name: e.name };
+    }
+    noArrays();
+    return e;
+  }
+  function parsePrimary() {
+    const t = next();
+    if (t.t === 'num') return { k: 'num', v: t.v, f: t.f, raw: t.raw };
+    if (t.t === 'chr') return { k: 'chr', v: t.v };
+    if (t.t === 'str') { let v = t.v; while (peek().t === 'str') v += next().v; return { k: 'str', v }; }
+    if (t.t === 'id') {
+      if (t.v === 'true' || t.v === 'false') return { k: 'bool', v: t.v === 'true' ? 1 : 0 };
+      if (is('(')) {
+        next(); const args = [];
+        if (!is(')')) { do args.push(parseAssign()); while (accept(',')); }
+        expect(')', `The call to ${t.v}( needs a ) to close it.`);
+        return { k: 'call', name: t.v, args, line: t.line };
+      }
+      if (KEYWORDS.has(t.v) || TYPES.has(t.v)) throw new CErr(t.line, `"${t.v}" can't go here.`);
+      return { k: 'var', name: t.v };
+    }
+    if (t.t === 'op' && t.v === '(') { const e = parseSeq(); expect(')', 'Missing a ) to match a ('); return { k: 'paren', e }; }
+    throw new CErr(t.line, t.t === 'eof' ? 'The code ended in the middle of an expression.' : `I didn't expect "${tokText(t)}" here.`);
+  }
+
+  const fns = {}, top = [];
+  while (peek().t !== 'eof') {
+    if (isTypeAt()) {
+      let k = 0; while (isTypeAt(k)) k++;
+      if (peek(k).t === 'id' && is('(', k + 1)) {
+        const line = peek().line; const ret = parseType(); const name = next().v; next();
+        const params = [];
+        if (is('void') && is(')', 1)) next();
+        else if (!is(')')) {
+          do {
+            const type = parseType(); const pn = next();
+            if (pn.t !== 'id') throw new CErr(pn.line, `Expected a parameter name in ${name}(...).`);
+            let arr = false; if (accept('[')) { expect(']'); arr = true; }
+            params.push({ type, name: pn.v, arr });
+          } while (accept(','));
+        }
+        expect(')', `${name}(...) needs a ) after its parameters.`);
+        if (accept(';')) continue; // prototype
+        if (fns[name]) throw new CErr(line, `There are two functions named ${name}.`);
+        fns[name] = { name, ret, params, body: parseBlock(), line };
+        continue;
+      }
+    }
+    top.push(parseStatement());
+  }
+  return { fns, top };
+}
+
+/* ---------- display helpers ---------- */
+function qstr(s) { return '"' + s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\t/g, '\\t').replace(/\0/g, '\\0') + '"'; }
+function qchr(c) { const ch = String.fromCharCode(c); const m = { '\n': '\\n', '\t': '\\t', '\\': '\\\\', "'": "\\'", '\0': '\\0' }; return "'" + (m[ch] ?? ch) + "'"; }
+const isFloat = t => t === 'float' || t === 'double';
+function disp(t, v) {
+  if (v === undefined) return '?';
+  switch (t) {
+    case 'char': return qchr(v);
+    case 'bool': return v ? 'true' : 'false';
+    case 'float': case 'double': return Number.isInteger(v) ? v.toFixed(1) : String(+v.toPrecision(7));
+    case 'string': return qstr(v);
+    default: return String(v);
+  }
+}
+function srcOf(e) {
+  switch (e.k) {
+    case 'num': return e.raw;
+    case 'chr': return qchr(e.v);
+    case 'str': return qstr(e.v);
+    case 'bool': return e.v ? 'true' : 'false';
+    case 'var': return e.name;
+    case 'paren': return '(' + srcOf(e.e) + ')';
+    case 'bin': return srcOf(e.a) + ' ' + e.op + ' ' + srcOf(e.b);
+    case 'un': return e.op + srcOf(e.arg);
+    case 'pre': return e.op + e.name;
+    case 'post': return e.name + e.op;
+    case 'assign': return e.name + ' ' + e.op + ' ' + srcOf(e.value);
+    case 'call': return e.name + '(' + e.args.map(srcOf).join(', ') + ')';
+    case 'cast': return '(' + e.type + ') ' + srcOf(e.arg);
+    case 'cond': return srcOf(e.c) + ' ? ' + srcOf(e.a) + ' : ' + srcOf(e.b);
+    case 'seq': return e.list.map(srcOf).join(', ');
+  }
+  return '?';
+}
+const isLit = e => ['num', 'chr', 'str', 'bool'].includes(e.k) || (e.k === 'un' && e.op === '-' && e.arg.k === 'num');
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : (w.endsWith('s') ? 'es' : 'es')}`;
+const listNames = a => a.length === 1 ? `\`${a[0]}\`` : a.slice(0, -1).map(x => `\`${x}\``).join(', ') + ' and ' + `\`${a[a.length - 1]}\``;
+
+/* ---------- interpreter: runs the whole program up front and records every step ---------- */
+class Run {
+  constructor(prog, inputs) {
+    this.fns = prog.fns; this.top = prog.top; this.inputs = inputs.slice();
+    this.out = ''; this.trace = []; this.loops = []; this.frames = []; this.globals = new Map();
+    this.varId = 0; this.note = ''; this.line = null; this.prefix = '';
+    this.lastPrint = null; this.lastInput = null;
+  }
+  frame() { return this.frames[this.frames.length - 1]; }
+  snapshot(line, text) {
+    const vars = [];
+    for (const x of this.globals.values()) vars.push(this.vs(x, 0));
+    const f = this.frame();
+    if (f) f.scopes.forEach((m, d) => { for (const x of m.values()) vars.push(this.vs(x, d)); });
+    return { line, text, note: this.note, vars, loops: this.loops.map(l => ({ label: l.label, line: l.line, iter: l.iter })), outLen: this.out.length, stack: this.frames.map(fr => fr.name) };
+  }
+  vs(x, d) { return { id: x.id, name: x.name, type: x.type, val: x.init ? disp(x.type, x.value) : '?', d }; }
+  rec(line, text) {
+    if (this.trace.length >= LIMIT) { this.note = ''; STOP.snap = this.snapshot(this.line, ''); throw STOP; }
+    this.trace.push(this.snapshot(line, this.prefix + text));
+    this.note = '';
+  }
+  err(msg) { const e = new CErr(this.line, msg); this.note = ''; e.snap = this.snapshot(this.line, msg); return e; }
+  scopes() { const f = this.frame(); return f ? f.scopes : null; }
+  pushScope() { const s = this.scopes(); if (s) s.push(new Map()); }
+  popScope() {
+    const s = this.scopes(); if (!s || s.length <= 1) return;
+    const m = s.pop();
+    if (m.size) {
+      const names = [...m.keys()];
+      this.note += (this.note ? ' ' : '') + `${listNames(names)} ${names.length > 1 ? 'were' : 'was'} created inside the block that just ended, so ${names.length > 1 ? 'they are' : 'it is'} gone now.`;
+    }
+  }
+  declare(name, type, value, init) {
+    const s = this.scopes(); const m = s ? s[s.length - 1] : this.globals;
+    if (m.has(name)) throw this.err(`${name} was already created in this block. To change it, leave off the type: ${name} = ...;`);
+    m.set(name, { id: ++this.varId, name, type, value, init });
+  }
+  lookup(name) {
+    const f = this.frame();
+    if (f) for (let i = f.scopes.length - 1; i >= 0; i--) if (f.scopes[i].has(name)) return f.scopes[i].get(name);
+    if (this.globals.has(name)) return this.globals.get(name);
+    throw this.err(`${name} hasn't been created here. Did you forget a line like int ${name} = 0; ? Or is ${name} being used outside the loop or block where it was created?`);
+  }
+  readVar(name) {
+    const x = this.lookup(name);
+    if (!x.init) throw this.err(`${name} is used before it has a value. In C it would hold a random leftover value. Give it a starting value, like ${x.type} ${name} = 0;`);
+    return x;
+  }
+  coerce(type, val) {
+    if (val.t === 'void') throw this.err('This function does not return a value, so there is nothing to store.');
+    if (type === 'string') { if (val.t !== 'string') throw this.err('A string needs text in double quotes, like "hi".'); return val.v; }
+    if (val.t === 'string') throw this.err(`You can't store text in a ${type}. Use a string variable instead.`);
+    switch (type) {
+      case 'int': return Math.trunc(val.v) | 0;
+      case 'short': case 'long': return Math.trunc(val.v);
+      case 'char': { const x = Math.trunc(val.v); return ((x + 128) % 256 + 256) % 256 - 128; }
+      case 'bool': return val.v ? 1 : 0;
+      case 'float': return Math.fround(val.v);
+      default: return Number(val.v);
+    }
+  }
+  truth(v) { return v.t === 'string' ? true : v.v !== 0; }
+  subst(e) {
+    switch (e.k) {
+      case 'var': try { const x = this.lookup(e.name); return x.init ? disp(x.type, x.value) : e.name; } catch (_) { return e.name; }
+      case 'bin': return this.subst(e.a) + ' ' + e.op + ' ' + this.subst(e.b);
+      case 'paren': return '(' + this.subst(e.e) + ')';
+      case 'un': return e.op + this.subst(e.arg);
+      case 'cast': return '(' + e.type + ') ' + this.subst(e.arg);
+      case 'cond': return this.subst(e.c) + ' ? ' + this.subst(e.a) + ' : ' + this.subst(e.b);
+      default: return srcOf(e);
+    }
+  }
+  phrase(e, sub, t, v) {
+    const d = disp(t, v);
+    if (isLit(e)) return '`' + d + '`';
+    const s = srcOf(e);
+    if (sub === s || sub === d) return '`' + s + '`, which is `' + d + '`';
+    return '`' + s + '`, which is `' + sub + '` = `' + d + '`';
+  }
+  inputPhrase(li) {
+    return `\`${li.name}\` ${li.prompt ? `prints \`${qstr(li.prompt)}\` and ` : ''}waits for the user, who types \`${li.raw}\``;
+  }
+  binop(op, a, b) {
+    if (a.t === 'string' || b.t === 'string') {
+      if (op === '==' || op === '!=') throw this.err('In C, == does not compare strings. That comes later with strcmp.');
+      throw this.err(`You can't use ${op} with a string.`);
+    }
+    const fl = isFloat(a.t) || isFloat(b.t);
+    const lg = a.t === 'long' || b.t === 'long';
+    const num = x => fl ? { v: x, t: 'double' } : lg ? { v: x, t: 'long' } : { v: x | 0, t: 'int' };
+    switch (op) {
+      case '+': return num(a.v + b.v);
+      case '-': return num(a.v - b.v);
+      case '*': return num(a.v * b.v);
+      case '/':
+        if (b.v === 0 && !fl) throw this.err('Division by zero. The program would crash here.');
+        return fl ? { v: a.v / b.v, t: 'double' } : num(Math.trunc(a.v / b.v));
+      case '%':
+        if (fl) throw this.err('% only works with whole numbers (int), not float or double.');
+        if (b.v === 0) throw this.err('% by zero. The program would crash here.');
+        return num(a.v % b.v);
+      case '<': return { v: a.v < b.v ? 1 : 0, t: 'bool' };
+      case '>': return { v: a.v > b.v ? 1 : 0, t: 'bool' };
+      case '<=': return { v: a.v <= b.v ? 1 : 0, t: 'bool' };
+      case '>=': return { v: a.v >= b.v ? 1 : 0, t: 'bool' };
+      case '==': return { v: a.v === b.v ? 1 : 0, t: 'bool' };
+      case '!=': return { v: a.v !== b.v ? 1 : 0, t: 'bool' };
+    }
+    throw this.err(`I don't know the operator ${op}.`);
+  }
+  ev(e) {
+    switch (e.k) {
+      case 'num': return { v: e.v, t: e.f ? 'double' : 'int' };
+      case 'chr': return { v: e.v, t: 'char' };
+      case 'str': return { v: e.v, t: 'string' };
+      case 'bool': return { v: e.v, t: 'bool' };
+      case 'paren': return this.ev(e.e);
+      case 'var': { const x = this.readVar(e.name); return { v: x.value, t: x.type }; }
+      case 'assign': {
+        const x = this.lookup(e.name);
+        let r = this.ev(e.value);
+        if (e.op !== '=') { if (!x.init) this.readVar(e.name); r = this.binop(e.op[0], { v: x.value, t: x.type }, r); }
+        x.value = this.coerce(x.type, r); x.init = true;
+        return { v: x.value, t: x.type };
+      }
+      case 'pre': case 'post': {
+        const x = this.readVar(e.name);
+        if (x.type === 'string') throw this.err(`You can't use ${e.op} on a string.`);
+        const old = x.value;
+        x.value = this.coerce(x.type, { v: old + (e.op === '++' ? 1 : -1), t: x.type });
+        return { v: e.k === 'pre' ? x.value : old, t: x.type };
+      }
+      case 'un': {
+        const a = this.ev(e.arg);
+        if (e.op === '!') return { v: this.truth(a) ? 0 : 1, t: 'bool' };
+        if (a.t === 'string') throw this.err(`You can't use ${e.op} on a string.`);
+        if (e.op === '-') return { v: -a.v, t: isFloat(a.t) ? a.t : 'int' };
+        return a;
+      }
+      case 'cast': return { v: this.coerce(e.type, this.ev(e.arg)), t: e.type };
+      case 'bin': {
+        if (e.op === '&&') { const a = this.ev(e.a); if (!this.truth(a)) return { v: 0, t: 'bool' }; return { v: this.truth(this.ev(e.b)) ? 1 : 0, t: 'bool' }; }
+        if (e.op === '||') { const a = this.ev(e.a); if (this.truth(a)) return { v: 1, t: 'bool' }; return { v: this.truth(this.ev(e.b)) ? 1 : 0, t: 'bool' }; }
+        const a = this.ev(e.a), b = this.ev(e.b);
+        return this.binop(e.op, a, b);
+      }
+      case 'cond': return this.ev(this.truth(this.ev(e.c)) ? e.a : e.b);
+      case 'seq': { let r; for (const x of e.list) r = this.ev(x); return r; }
+      case 'call': return this.call(e);
+    }
+    throw this.err('I could not work out this expression.');
+  }
+  format(fmt, vals) {
+    let i = 0;
+    const s = fmt.replace(/%([-+ 0#]*)(\d+)?(?:\.(\d+))?(hh|h|ll|l|L|z)?([diucsfFeEgGxX%])?/g, (m, flags, w, prec, len, conv) => {
+      if (!conv) throw this.err(`printf found "${m}" but it is not a complete placeholder like %i.`);
+      if (conv === '%') return '%';
+      if (i >= vals.length) throw this.err('printf has more placeholders (like %i) than values after the format string.');
+      const a = vals[i++]; let s;
+      const kind = { i: 'int', d: 'int', u: 'int', c: 'char', s: 'string', f: 'float' };
+      if (a.t === 'string' && conv !== 's') throw this.err(`%${conv} can't print a string. Use %s for strings.`);
+      switch (conv) {
+        case 'd': case 'i': case 'u':
+          if (isFloat(a.t)) throw this.err(`%${conv} is for whole numbers, but this value is a ${a.t}. Use %f for floats, or cast with (int).`);
+          s = String(Math.trunc(a.v)); break;
+        case 'c': s = String.fromCharCode(a.v); break;
+        case 's': if (a.t !== 'string') throw this.err(`%s is for strings, but this value is a ${a.t}. Use %i for ints or %c for chars.`); s = prec !== undefined ? a.v.slice(0, +prec) : a.v; break;
+        case 'f': case 'F':
+          if (!isFloat(a.t)) throw this.err(`%f is for floats, but this value is a ${a.t}. Use %i for ints, or cast with (float).`);
+          s = a.v.toFixed(prec === undefined ? 6 : +prec); break;
+        case 'e': case 'E': s = a.v.toExponential(prec === undefined ? 6 : +prec).replace(/e([+-])(\d)$/, 'e$10$2'); if (conv === 'E') s = s.toUpperCase(); break;
+        case 'g': case 'G': s = String(+Number(a.v).toPrecision(prec === undefined ? 6 : Math.max(1, +prec))); break;
+        case 'x': case 'X': s = (a.v >>> 0).toString(16); if (conv === 'X') s = s.toUpperCase(); break;
+      }
+      void kind;
+      if (flags.includes('+') && /[dif]/.test(conv) && a.v >= 0) s = '+' + s;
+      if (w && s.length < +w) {
+        if (flags.includes('-')) s = s.padEnd(+w);
+        else if (flags.includes('0') && conv !== 's' && conv !== 'c') s = /^[-+]/.test(s) ? s[0] + s.slice(1).padStart(+w - 1, '0') : s.padStart(+w, '0');
+        else s = s.padStart(+w);
+      }
+      return s;
+    });
+    return s;
+  }
+  call(e) {
+    const name = e.name;
+    if (this.fns[name]) return this.callUser(e);
+    const argv = () => e.args.map(a => this.ev(a));
+    switch (name) {
+      case 'printf': {
+        if (!e.args.length) throw this.err('printf needs something to print, like printf("hello\\n");');
+        const vals = argv();
+        if (vals[0].t !== 'string') throw this.err('printf needs a string in double quotes first, like printf("%i\\n", x);');
+        const s = this.format(vals[0].v, vals.slice(1));
+        this.out += s; this.lastPrint = s;
+        return { v: s.length, t: 'int' };
+      }
+      case 'get_int': case 'get_long': case 'get_float': case 'get_double': case 'get_char': case 'get_string': {
+        const vals = argv();
+        const prompt = vals.length ? (vals[0].t === 'string' ? this.format(vals[0].v, vals.slice(1)) : '') : '';
+        this.out += prompt;
+        if (!this.inputs.length) throw this.err(`${name} is waiting for the user to type something. Add a value to the Input box under your code, then step through it again.`);
+        const raw = this.inputs.shift();
+        this.out += raw + '\n';
+        this.lastInput = { name, prompt, raw };
+        if (name === 'get_int' || name === 'get_long') {
+          if (!/^[+-]?\d+$/.test(raw)) throw this.err(`${name} needs a whole number, but the Input box gave "${raw}".`);
+          return { v: parseInt(raw, 10), t: name === 'get_int' ? 'int' : 'long' };
+        }
+        if (name === 'get_float' || name === 'get_double') {
+          if (!/^[+-]?(\d+\.?\d*|\.\d+)$/.test(raw)) throw this.err(`${name} needs a number, but the Input box gave "${raw}".`);
+          return { v: name === 'get_float' ? Math.fround(parseFloat(raw)) : parseFloat(raw), t: name === 'get_float' ? 'float' : 'double' };
+        }
+        if (name === 'get_char') {
+          if (raw.length !== 1) throw this.err(`get_char needs exactly one character, but the Input box gave "${raw}".`);
+          return { v: raw.charCodeAt(0), t: 'char' };
+        }
+        return { v: raw, t: 'string' };
+      }
+      case 'strlen': { const [a] = argv(); if (!a || a.t !== 'string') throw this.err('strlen needs a string.'); return { v: a.v.length, t: 'int' }; }
+      case 'toupper': case 'tolower': { const [a] = argv(); if (!a) throw this.err(`${name} needs a char.`); const ch = String.fromCharCode(a.v); return { v: (name === 'toupper' ? ch.toUpperCase() : ch.toLowerCase()).charCodeAt(0), t: 'char' }; }
+      case 'abs': { const [a] = argv(); return { v: Math.abs(a.v), t: 'int' }; }
+      case 'round': { const [a] = argv(); return { v: Math.sign(a.v) * Math.round(Math.abs(a.v)), t: 'double' }; }
+      case 'sqrt': { const [a] = argv(); return { v: Math.sqrt(a.v), t: 'double' }; }
+      case 'pow': { const [a, b] = argv(); return { v: Math.pow(a.v, b.v), t: 'double' }; }
+      case 'main': throw this.err('main should not call itself.');
+    }
+    throw this.err(`I don't know a function called ${name}. This stepper knows printf, the get_ functions from cs50.h, and functions you write yourself.`);
+  }
+  callUser(e) {
+    const f = this.fns[e.name];
+    if (e.args.length !== f.params.length) throw this.err(`${e.name} expects ${f.params.length} argument${f.params.length === 1 ? '' : 's'}, but this call gives ${e.args.length}.`);
+    const vals = e.args.map(a => this.ev(a));
+    if (this.frames.length > 60) throw this.err('Too many function calls inside each other. Is a function calling itself forever?');
+    const callLine = this.line, caller = this.frame() ? this.frame().name : 'main';
+    this.rec(callLine, `Call \`${e.name}(${vals.map(v => disp(v.t, v.v)).join(', ')})\`. The program jumps into ${e.name}.`);
+    this.frames.push({ name: e.name, scopes: [new Map()], loopBase: this.loops.length });
+    this.line = f.line;
+    f.params.forEach((p, i) => this.declare(p.name, p.type, this.coerce(p.type, vals[i]), true));
+    this.rec(f.line, f.params.length ? `Inside ${e.name}: ${f.params.map((p, i) => `\`${p.name}\` gets the value \`${disp(p.type, this.coerce(p.type, vals[i]))}\``).join(', ')}.` : `Start running ${e.name}.`);
+    const r = this.exec(f.body);
+    this.frames.pop();
+    this.line = callLine;
+    let rv = { v: 0, t: 'void' };
+    if (f.ret !== 'void') rv = r && r.ret && r.val ? { v: this.coerce(f.ret, r.val), t: f.ret } : { v: 0, t: f.ret };
+    this.note = '';
+    this.rec(callLine, `${e.name} is finished${f.ret !== 'void' ? ` and gives back \`${disp(rv.t, rv.v)}\`` : ''}. Back in ${caller}.`);
+    return rv;
+  }
+  loopLabel(s) {
+    let label = 'loop';
+    if (s.k === 'for') {
+      if (s.init && s.init.k === 'decl') label = `${s.init.items[0].name} loop`;
+      else if (s.init && s.init.k === 'expr' && s.init.e.k === 'assign') label = `${s.init.e.name} loop`;
+      else if (s.cond && s.cond.k === 'bin' && s.cond.a.k === 'var') label = `${s.cond.a.name} loop`;
+      else label = 'for loop';
+    } else label = s.k === 'do' ? 'do-while loop' : 'while loop';
+    if (this.loops.some(l => l.label === label)) label += ` on line ${s.line}`;
+    return label;
+  }
+  exprStep(e) {
+    if (e.k === 'seq') return e.list.map(x => this.exprStep(x)).join(' ');
+    this.lastPrint = null; this.lastInput = null;
+    if (e.k === 'call' && e.name === 'printf') { this.ev(e); return printPhrase(this.lastPrint); }
+    if (e.k === 'call' && /^get_/.test(e.name)) { this.ev(e); return this.inputPhrase(this.lastInput) + '. The value is not saved in any variable.'; }
+    if (e.k === 'post' || e.k === 'pre') {
+      this.ev(e); const x = this.lookup(e.name);
+      return `\`${srcOf(e)}\` ${e.op === '++' ? 'adds 1 to' : 'subtracts 1 from'} \`${e.name}\`. Now \`${e.name}\` is \`${disp(x.type, x.value)}\`.`;
+    }
+    if (e.k === 'assign') {
+      const x = this.lookup(e.name);
+      const sub = this.subst(e.value), old = x.init ? disp(x.type, x.value) : '?';
+      this.ev(e);
+      const now = disp(x.type, x.value);
+      if (e.op === '=') {
+        if (e.value.k === 'call' && /^get_/.test(e.value.name) && this.lastInput) return this.inputPhrase(this.lastInput) + `, so \`${e.name}\` is now \`${now}\`.`;
+        return `Set \`${e.name}\` to ${this.phrase(e.value, sub, x.type, x.value)}.`;
+      }
+      const o = e.op[0];
+      return `\`${srcOf(e)}\` means \`${e.name} = ${e.name} ${o} ${srcOf(e.value)}\`, which is \`${old} ${o} ${sub}\` = \`${now}\`.`;
+    }
+    const sub = this.subst(e), s = srcOf(e);
+    const r = this.ev(e);
+    return `Work out \`${s}\`${sub !== s ? ` (\`${sub}\`)` : ''}, which is \`${disp(r.t, r.v)}\`. The result is not saved anywhere.`;
+  }
+  check(e) {
+    const sub = this.subst(e), s = srcOf(e);
+    const t = this.truth(this.ev(e));
+    return { t, txt: sub === s ? `\`${s}\` is ${t}` : `\`${s}\` becomes \`${sub}\`, which is ${t}` };
+  }
+  exec(s) {
+    if (s.line != null) this.line = s.line;
+    switch (s.k) {
+      case 'empty': return;
+      case 'block': {
+        this.pushScope();
+        try { for (const x of s.body) { const r = this.exec(x); if (r) return r; } }
+        finally { this.popScope(); }
+        return;
+      }
+      case 'decl': {
+        for (const it of s.items) {
+          this.line = it.line;
+          if (it.init) {
+            const sub = this.subst(it.init);
+            this.lastInput = null;
+            const v = this.ev(it.init);
+            const val = this.coerce(s.type, v);
+            this.declare(it.name, s.type, val, true);
+            let text;
+            if (it.init.k === 'call' && /^get_/.test(it.init.name) && this.lastInput) text = this.inputPhrase(this.lastInput) + `. Create ${s.type} \`${it.name}\` and store \`${disp(s.type, val)}\` in it.`;
+            else text = `Create ${s.type} \`${it.name}\` and set it to ${this.phrase(it.init, sub, s.type, val)}.`;
+            if ((s.type === 'int' || s.type === 'long') && isFloat(v.t) && v.v !== val) text += ` An ${s.type} can't hold the decimal part, so it is cut off.`;
+            this.rec(it.line, text);
+          } else {
+            this.declare(it.name, s.type, undefined, false);
+            this.rec(it.line, `Create ${s.type} \`${it.name}\`. It has no value yet.`);
+          }
+        }
+        return;
+      }
+      case 'expr': {
+        if (s.e.k === 'call' && this.fns[s.e.name]) { this.ev(s.e); return; }
+        this.rec(s.line, this.exprStep(s.e));
+        return;
+      }
+      case 'if': {
+        const c = this.check(s.cond);
+        if (c.t) { this.rec(s.line, `Check \`if\`: ${c.txt}, so run the if block.`); return this.exec(s.then); }
+        if (s.els) { this.rec(s.line, `Check \`if\`: ${c.txt}, so ${s.els.k === 'if' ? 'move on to the else if' : 'skip ahead and run the else block'}.`); return this.exec(s.els); }
+        this.rec(s.line, `Check \`if\`: ${c.txt}, so skip the if block.`);
+        return;
+      }
+      case 'for': {
+        this.pushScope();
+        const L = { label: this.loopLabel(s), line: s.line, iter: 0 };
+        this.loops.push(L);
+        try {
+          if (s.init) {
+            this.prefix = 'Loop setup (this runs only once): ';
+            try { if (s.init.k === 'decl') this.exec(s.init); else { this.line = s.line; this.rec(s.line, this.exprStep(s.init.e)); } }
+            finally { this.prefix = ''; }
+          }
+          for (;;) {
+            this.line = s.line;
+            if (s.cond) {
+              const c = this.check(s.cond);
+              if (!c.t) { this.rec(s.line, `Check ${c.txt}, so the ${L.label} ends after ${plural(L.iter, 'pass')}.`); break; }
+              L.iter++;
+              this.rec(s.line, `Check ${c.txt}, so run the body. Pass ${L.iter} of the ${L.label}.`);
+            } else { L.iter++; this.rec(s.line, `There is no condition, so run the body. Pass ${L.iter} of the ${L.label}.`); }
+            const r = this.exec(s.body);
+            if (r) { if (r.brk) break; if (r.ret) return r; }
+            if (s.upd) { this.line = s.line; this.rec(s.line, 'Update: ' + this.exprStep(s.upd)); }
+          }
+        } finally { this.loops.pop(); this.popScope(); }
+        return;
+      }
+      case 'while': {
+        const L = { label: this.loopLabel(s), line: s.line, iter: 0 };
+        this.loops.push(L);
+        try {
+          for (;;) {
+            this.line = s.line;
+            const c = this.check(s.cond);
+            if (!c.t) { this.rec(s.line, `Check ${c.txt}, so the ${L.label} ends after ${plural(L.iter, 'pass')}.`); break; }
+            L.iter++;
+            this.rec(s.line, `Check ${c.txt}, so run the body. Pass ${L.iter} of the ${L.label}.`);
+            const r = this.exec(s.body);
+            if (r) { if (r.brk) break; if (r.ret) return r; }
+          }
+        } finally { this.loops.pop(); }
+        return;
+      }
+      case 'do': {
+        const L = { label: this.loopLabel(s), line: s.line, iter: 0 };
+        this.loops.push(L);
+        try {
+          for (;;) {
+            L.iter++;
+            this.line = s.line;
+            this.rec(s.line, L.iter === 1 ? `Start the do-while loop. It runs the body first and checks the condition after. Pass 1.` : `Back to the top of the do-while loop. Pass ${L.iter}.`);
+            const r = this.exec(s.body);
+            if (r) { if (r.brk) break; if (r.ret) return r; }
+            this.line = s.wline;
+            const c = this.check(s.cond);
+            if (!c.t) { this.rec(s.wline, `Check ${c.txt}, so the do-while loop ends after ${plural(L.iter, 'pass')}.`); break; }
+            this.rec(s.wline, `Check ${c.txt}, so go back up and run the body again.`);
+          }
+        } finally { this.loops.pop(); }
+        return;
+      }
+      case 'break': {
+        const f = this.frame(); const base = f ? (f.loopBase || 0) : 0;
+        if (this.loops.length <= base) throw this.err('break only works inside a loop.');
+        this.rec(s.line, `\`break\` leaves the ${this.loops[this.loops.length - 1].label} right now, skipping any passes that were left.`);
+        return { brk: true };
+      }
+      case 'continue': {
+        const f = this.frame(); const base = f ? (f.loopBase || 0) : 0;
+        if (this.loops.length <= base) throw this.err('continue only works inside a loop.');
+        this.rec(s.line, `\`continue\` skips the rest of this pass of the ${this.loops[this.loops.length - 1].label}.`);
+        return { cont: true };
+      }
+      case 'return': {
+        const f = this.frame();
+        const inMain = !f || f.name === 'main';
+        let val = null, sub = '';
+        if (s.e) { sub = this.subst(s.e); val = this.ev(s.e); }
+        if (inMain) this.rec(s.line, `\`return${val ? ' ' + disp(val.t, val.v) : ''}\` ends main, so the program is done.`);
+        else this.rec(s.line, val ? `Return ${this.phrase(s.e, sub, val.t, val.v)} to whoever called ${f.name}.` : `Return from ${f.name}.`);
+        return { ret: true, val, main: inMain };
+      }
+    }
+    throw this.err('I could not run this line.');
+  }
+  run() {
+    try {
+      if (!Object.keys(this.fns).length) {
+        this.frames.push({ name: 'main', scopes: [new Map()], loopBase: 0 });
+        this.rec(null, 'Ready. Press Next step to run the first line.');
+        let ended = false;
+        for (const s of this.top) { const r = this.exec(s); if (r && r.ret) { ended = true; break; } }
+        this.note = '';
+        if (!ended) this.rec(null, 'That was the last line, so the program is done. Compare the output with what you predicted.');
+      } else {
+        const m = this.fns.main;
+        if (!m) throw new CErr(1, 'I found functions but no main. Every C program starts running at main.');
+        for (const s of this.top) {
+          if (s.k !== 'decl') throw new CErr(s.line, 'Only variable declarations can go outside of a function. Move this line into main.');
+          this.exec(s);
+        }
+        this.frames.push({ name: 'main', scopes: [new Map()], loopBase: 0 });
+        m.params.forEach(p => { if (!p.arr) this.declare(p.name, p.type, 1, true); });
+        this.line = m.line;
+        this.rec(m.line, 'The program starts running at main.');
+        const r = this.exec(m.body);
+        this.note = '';
+        if (!(r && r.ret)) this.rec(m.body.endLine, 'Reached the closing } of main, so the program is done. Compare the output with what you predicted.');
+      }
+    } catch (e) {
+      if (e === STOP) { this.trace.push(Object.assign(e.snap, { text: `Stopped after ${LIMIT.toLocaleString()} steps. A loop may never end. Check that its condition eventually becomes false, and that the update moves toward it.`, error: true })); this.stopped = true; }
+      else if (e instanceof CErr) { this.note = ''; this.trace.push(Object.assign(e.snap || this.snapshot(e.line, e.message), { error: true })); }
+      else throw e;
+    }
+    return this;
+  }
+}
+function printPhrase(s) {
+  if (s === null || s === '') return '`printf` prints nothing.';
+  if (s === '\n') return '`printf` prints `\\n`, a newline. Anything printed next starts on a new line.';
+  let t = `\`printf\` prints \`${qstr(s)}\``;
+  if (/^ +$/.test(s)) t += s.length === 1 ? ', a single space' : `, ${s.length} spaces`;
+  t += '.';
+  if (s.length > 1 && s.endsWith('\n')) t += ' The `\\n` at the end moves to a new line.';
+  return t;
+}
+
+/* ---------- syntax highlight for the stepper's source view ---------- */
+const CTRL = new Set(['for', 'while', 'do', 'if', 'else', 'return', 'break', 'continue']);
+function hl(line) {
+  let out = '';
+  const re = /(\/\/.*$)|(^\s*#.*$)|("(?:\\.|[^"\\])*"?)|('(?:\\.|[^'\\])*'?)|(\b\d+(?:\.\d+)?f?\b)|([A-Za-z_]\w*)|(\s+|.)/g;
+  let m;
+  while ((m = re.exec(line))) {
+    const [tok, cm, pp, st, ch, nu, id] = m;
+    if (cm) out += `<span class="cm">${esc(tok)}</span>`;
+    else if (pp) out += `<span class="pp">${esc(tok)}</span>`;
+    else if (st || ch) out += `<span class="st">${esc(tok)}</span>`;
+    else if (nu) out += `<span class="nu">${tok}</span>`;
+    else if (id) {
+      if (CTRL.has(id)) out += `<span class="kw">${id}</span>`;
+      else if (TYPES.has(id)) out += `<span class="ty">${id}</span>`;
+      else if (id === 'true' || id === 'false') out += `<span class="nu">${id}</span>`;
+      else if (/^\s*\(/.test(line.slice(re.lastIndex))) out += `<span class="fn">${id}</span>`;
+      else out += id;
+    } else out += esc(tok);
+    if (!tok.length) re.lastIndex++;
+  }
+  return out;
+}
+
+/* ---------- UI ---------- */
+const ed = $('code'), gutter = $('gutter');
+const examples = [...document.querySelectorAll('script[id^="ex-"]')].map(s => ({ name: s.id.slice(3), code: s.textContent, input: s.dataset.input }));
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let T = [], OUT = '', cur = 0, rows = [], showSp = true, playing = null, errLine = 0;
+
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (_) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (_) { /* storage unavailable */ } }
+};
+function normalize(code) {
+  return code.replace(/[\u201C\u201D\u201E\u2033]/g, '"').replace(/[\u2018\u2019\u2032]/g, "'").replace(/\u00A0/g, ' ').replace(/\r\n?/g, '\n').replace(/\t/g, '    ');
+}
+function sizeEditor() {
+  const n = ed.value.split('\n').length;
+  gutter.innerHTML = Array.from({ length: n }, (_, i) => i + 1 === errLine ? `<span class="bad">${i + 1}</span>` : String(i + 1)).join('\n');
+  ed.style.height = 'auto';
+  ed.style.height = ed.scrollHeight + 'px';
+}
+function setActiveTab(name) { document.querySelectorAll('#exTabs button').forEach(b => b.classList.toggle('on', b.dataset.name === name)); }
+
+examples.forEach(ex => {
+  const b = document.createElement('button');
+  b.textContent = ex.name; b.dataset.name = ex.name; b.type = 'button';
+  b.addEventListener('click', () => {
+    ed.value = ex.code; if (ex.input) $('inputs').value = ex.input;
+    store.set('loopstepper.code', ed.value); setActiveTab(ex.name); load();
+  });
+  $('exTabs').appendChild(b);
+});
+
+ed.addEventListener('input', () => { errLine = 0; sizeEditor(); setActiveTab(null); $('stale').hidden = false; store.set('loopstepper.code', ed.value); });
+ed.addEventListener('keydown', e => {
+  if (e.key === 'Tab' && !e.shiftKey) {
+    e.preventDefault();
+    const s = ed.selectionStart, en = ed.selectionEnd;
+    ed.setRangeText('    ', s, en, 'end');
+    ed.dispatchEvent(new Event('input'));
+  } else if (e.key === 'Enter') {
+    const s = ed.selectionStart;
+    const lineStart = ed.value.lastIndexOf('\n', s - 1) + 1;
+    const indent = (ed.value.slice(lineStart, s).match(/^ */) || [''])[0];
+    const extra = /\{\s*$/.test(ed.value.slice(lineStart, s)) ? '    ' : '';
+    if (indent || extra) { e.preventDefault(); ed.setRangeText('\n' + indent + extra, s, ed.selectionEnd, 'end'); ed.dispatchEvent(new Event('input')); }
+  } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); load(true); }
+});
+$('inputs').addEventListener('input', () => { $('stale').hidden = false; });
+$('bClear').addEventListener('click', () => { ed.value = ''; setActiveTab(null); sizeEditor(); ed.focus(); store.set('loopstepper.code', ''); });
+$('bLoad').addEventListener('click', () => load(true));
+
+function showErr(e) {
+  errLine = e.line || 0;
+  const lines = normalize(ed.value).split('\n');
+  $('errBox').innerHTML = `<b>${errLine ? 'Line ' + errLine + ': ' : ''}</b>${esc(e.message)}${errLine && lines[errLine - 1] !== undefined ? `<pre>${esc(lines[errLine - 1].trim())}</pre>` : ''}`;
+  $('errBox').hidden = false;
+  sizeEditor();
+}
+function load(scroll) {
+  stopPlay();
+  const code = normalize(ed.value);
+  if (!code.trim()) { showErr({ line: 0, message: 'There is no code yet. Paste a loop or pick an example.' }); return; }
+  const inputs = $('inputs').value.split(',').map(s => s.trim()).filter(s => s.length);
+  let r;
+  try { r = new Run(parse(tokenize(code)), inputs).run(); }
+  catch (e) {
+    if (e instanceof CErr) showErr(e);
+    else showErr({ line: 0, message: 'Something went wrong reading this code. ' + e.message });
+    return;
+  }
+  errLine = 0; $('errBox').hidden = true; $('stale').hidden = true; sizeEditor();
+  T = r.trace; OUT = r.out; cur = 0;
+  $('src').innerHTML = code.split('\n').map((l, i) => `<div><span class="ln">${i + 1}</span>${hl(l) || ' '}</div>`).join('');
+  rows = [...$('src').children];
+  $('scrub').max = T.length - 1;
+  render();
+  if (scroll) $('stepper-sec').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+}
+
+const fmtText = t => esc(t).replace(/`([^`]+)`/g, '<code>$1</code>');
+const fmtOut = t => { const h = esc(t); return showSp ? h.replace(/ /g, '<span class="sp">·</span>') : h; };
+
+function render() {
+  if (!T.length) return;
+  const s = T[cur], prev = cur > 0 ? T[cur - 1] : null;
+  const loopLines = new Set(s.loops.map(l => l.line));
+  rows.forEach((row, i) => {
+    const ln = i + 1;
+    row.classList.toggle('hl', !s.error && s.line === ln);
+    row.classList.toggle('err', !!s.error && s.line === ln);
+    row.classList.toggle('loopln', loopLines.has(ln) && s.line !== ln);
+  });
+  const row = s.line ? rows[s.line - 1] : null;
+  if (row) {
+    const c = $('src');
+    const top = row.offsetTop - c.clientHeight / 2 + row.offsetHeight / 2;
+    c.scrollTo({ top: Math.max(0, top), behavior: reduce ? 'auto' : 'smooth' });
+  }
+  const ex = $('explain');
+  ex.className = 'explain' + (s.error ? ' error' : '');
+  ex.innerHTML = (s.line ? `<span class="lnchip">${s.error ? 'error · ' : ''}line ${s.line}</span>` : (s.error ? '<span class="lnchip">error</span>' : '')) + fmtText(s.text) + (s.note ? `<p class="note2">${fmtText(s.note)}</p>` : '');
+
+  $('loops').innerHTML = s.loops.length
+    ? s.loops.map((l, i) => `<div class="lrow" style="--d:${i}"><span class="lname">${esc(l.label.replace(/ on line \d+$/, ''))}</span><span class="lline">line ${l.line}</span><span class="lpass">${l.iter ? 'pass ' + l.iter : 'setup'}</span></div>`).join('')
+    : '<div class="empty">No loop is running right now.</div>';
+
+  const pm = new Map((prev ? prev.vars : []).map(v => [v.id, v.val]));
+  const dmin = s.vars.length ? Math.min(...s.vars.map(v => v.d)) : 0;
+  $('vars').innerHTML = s.vars.length
+    ? s.vars.map(v => {
+      const nw = prev && !pm.has(v.id);
+      const ch = prev && pm.has(v.id) && pm.get(v.id) !== v.val;
+      return `<div class="vrow${ch ? ' ch' : ''}${nw ? ' nw' : ''}" style="--d:${v.d - dmin}"><span class="vt">${v.type}</span><span class="vn">${esc(v.name)}</span>${nw ? '<span class="tag">new</span>' : ''}<span class="vv">${esc(v.val)}</span></div>`;
+    }).join('')
+    : '<div class="empty">No variables yet.</div>';
+  const st = s.stack;
+  $('frame').textContent = st.length > 1 ? `in ${st[st.length - 1]}, called from ${st[st.length - 2]}` : '';
+
+  const text = OUT.slice(0, s.outLen), pl = prev ? Math.min(prev.outLen, s.outLen) : 0;
+  $('out').innerHTML = fmtOut(text.slice(0, pl)) + (s.outLen > pl ? `<span class="new">${fmtOut(text.slice(pl))}</span>` : '') + '<span class="cur"></span>';
+  const o = $('out'); o.scrollTop = o.scrollHeight;
+
+  $('count').textContent = `Step ${cur + 1} of ${T.length}`;
+  $('scrub').value = cur;
+  $('bBack').disabled = $('bReset').disabled = cur === 0;
+  $('bNext').disabled = $('bEnd').disabled = cur >= T.length - 1;
+  $('bPlay').disabled = cur >= T.length - 1 && !playing;
+}
+function go(n) { cur = Math.max(0, Math.min(T.length - 1, n)); render(); }
+function stopPlay() { if (playing) { clearInterval(playing); playing = null; $('bPlay').textContent = 'Play'; $('bPlay').classList.remove('on'); } }
+$('bNext').addEventListener('click', () => { stopPlay(); go(cur + 1); });
+$('bBack').addEventListener('click', () => { stopPlay(); go(cur - 1); });
+$('bReset').addEventListener('click', () => { stopPlay(); go(0); });
+$('bEnd').addEventListener('click', () => { stopPlay(); go(T.length - 1); });
+$('scrub').addEventListener('input', e => { stopPlay(); go(+e.target.value); });
+$('bPlay').addEventListener('click', () => {
+  if (playing) { stopPlay(); render(); return; }
+  if (cur >= T.length - 1) go(0);
+  $('bPlay').textContent = 'Pause'; $('bPlay').classList.add('on');
+  playing = setInterval(() => { if (cur >= T.length - 1) { stopPlay(); render(); return; } go(cur + 1); }, 650);
+});
+$('bSpaces').addEventListener('click', e => { showSp = !showSp; e.currentTarget.classList.toggle('on', showSp); e.currentTarget.setAttribute('aria-pressed', showSp); render(); });
+document.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'textarea' || tag === 'input' || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); stopPlay(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); stopPlay(); go(cur - 1); }
+});
+
+/* start with the saved draft, or the first example */
+const saved = store.get('loopstepper.code');
+if (saved && saved.trim()) { ed.value = saved; setActiveTab(examples.find(x => x.code === saved)?.name); }
+else { ed.value = examples[0].code; setActiveTab(examples[0].name); }
+sizeEditor();
+load(false);
+})();
+</script>
+
+</body></html>
