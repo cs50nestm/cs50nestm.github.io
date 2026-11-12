@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Lessons Review: Spam Filter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700&family=Nunito+Sans:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Layout: one reading column with full-width interactive panels, matching the class slide decks */
+  --bg: #FBFAF5;
+  --panel: #EEF1F6;
+  --ink: #14213D;
+  --muted: #4A5670;
+  --accent: #B5590E;
+  --accent-soft: #FCE7D2;
+  --blue: #2F5DA8;
+  --code-bg: #14213D;
+  --code-ink: #E8ECF4;
+  --code-accent: #F4A259;
+  --line: #D5DBE6;
+  --good: #1E7A4C;
+  --good-soft: #DDF1E6;
+  --bad: #B3261E;
+  --bad-soft: #FBE3E1;
+  --display: "Rubik", "Trebuchet MS", Arial, sans-serif;
+  --body: "Nunito Sans", Arial, sans-serif;
+  --mono: "JetBrains Mono", "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101A30; --panel: #18243F; --ink: #EEF1F6; --muted: #B4C0D6;
+    --accent: #F4A259; --accent-soft: #3A2A1A; --blue: #8DB0F0;
+    --code-bg: #0A1224; --line: #2C3A5A;
+    --good: #6FD39E; --good-soft: #163A2A; --bad: #F2948C; --bad-soft: #3E1C1A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101A30; --panel: #18243F; --ink: #EEF1F6; --muted: #B4C0D6;
+  --accent: #F4A259; --accent-soft: #3A2A1A; --blue: #8DB0F0;
+  --code-bg: #0A1224; --line: #2C3A5A;
+  --good: #6FD39E; --good-soft: #163A2A; --bad: #F2948C; --bad-soft: #3E1C1A;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 18px; line-height: 1.6; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 32px 20px 80px; display: flex; flex-direction: column; gap: 56px; }
+header { display: flex; flex-direction: column; gap: 12px; padding-top: 16px; }
+.eyebrow { font-family: var(--body); font-weight: 700; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin: 0; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(34px, 6vw, 52px); font-weight: 700; }
+h2 { font-size: clamp(26px, 4vw, 34px); font-weight: 600; }
+h3 { font-size: 21px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.lead { font-size: 20px; color: var(--muted); }
+section { display: flex; flex-direction: column; gap: 18px; scroll-margin-top: 16px; }
+nav ol { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 8px 0 0; counter-reset: n; }
+nav li { counter-increment: n; }
+nav a { display: inline-block; padding: 6px 14px; border-radius: 999px; background: var(--panel); color: var(--ink); text-decoration: none; font-size: 15px; font-weight: 700; }
+nav a::before { content: counter(n) ". "; color: var(--accent); }
+nav a:hover, nav a:focus-visible { background: var(--accent-soft); }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.card { background: var(--panel); border-radius: 14px; padding: 20px 22px; display: flex; flex-direction: column; gap: 6px; }
+.card .tag { font-family: var(--mono); color: var(--blue); font-size: 15px; }
+.panel { background: var(--panel); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 18px 22px; font-family: var(--mono); font-size: 17px; overflow-x: auto; }
+.rule b { color: var(--code-accent); font-weight: 700; }
+pre { margin: 0; background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 18px 22px; font-family: var(--mono); font-size: 15px; line-height: 1.5; overflow-x: auto; }
+.inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-weight: 700; font-size: 15px; }
+.stepper { display: flex; align-items: center; gap: 8px; }
+.stepper button { width: 40px; height: 40px; border-radius: 10px; border: 2px solid var(--line); background: var(--bg); color: var(--ink); font-size: 20px; font-weight: 700; cursor: pointer; }
+.stepper button:hover { border-color: var(--accent); }
+.stepper output { min-width: 40px; text-align: center; font-family: var(--mono); font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.result { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; font-family: var(--mono); font-size: 17px; }
+.verdict { font-family: var(--display); font-size: 22px; font-weight: 700; padding: 6px 16px; border-radius: 999px; }
+.verdict.spam { background: var(--bad-soft); color: var(--bad); }
+.verdict.ok { background: var(--good-soft); color: var(--good); }
+.sliders { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px 24px; }
+.slider { display: flex; flex-direction: column; gap: 4px; }
+.slider label { display: flex; justify-content: space-between; font-weight: 700; font-size: 15px; }
+.slider label span { font-family: var(--mono); color: var(--accent); font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.scoreboard { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.big { font-family: var(--display); font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.big small { font-size: 20px; color: var(--muted); font-weight: 500; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { border: 2px solid var(--accent); background: transparent; color: var(--ink); font-family: var(--body); font-weight: 700; font-size: 15px; padding: 8px 14px; border-radius: 10px; cursor: pointer; }
+.btn:hover { background: var(--accent-soft); }
+.btn.solid { background: var(--accent); color: #FFFFFF; }
+.msg { border-left: 6px solid var(--accent); background: var(--accent-soft); padding: 12px 16px; border-radius: 8px; }
+.tablewrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--line); }
+table { border-collapse: collapse; width: 100%; font-size: 16px; background: var(--bg); }
+th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--display); font-weight: 600; background: var(--panel); white-space: nowrap; }
+td.num, th.num { text-align: center; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+tr:last-child td { border-bottom: none; }
+.pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.pill.right { background: var(--good-soft); color: var(--good); }
+.pill.wrong { background: var(--bad-soft); color: var(--bad); }
+.why { display: block; font-size: 13px; color: var(--bad); margin-top: 2px; }
+.steps { counter-reset: s; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; padding: 0; margin: 0; list-style: none; }
+.steps li { counter-increment: s; background: var(--panel); border-radius: 14px; padding: 20px 22px; border-top: 6px solid var(--accent); }
+.steps li:nth-child(2) { border-top-color: var(--blue); }
+.steps li::before { content: counter(s); font-family: var(--display); font-size: 34px; font-weight: 700; color: var(--accent); display: block; }
+.steps li:nth-child(2)::before { color: var(--blue); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.pair .card { border-top: 6px solid var(--accent); }
+.pair .card + .card { border-top-color: var(--blue); }
+.ideas { display: flex; flex-direction: column; border-top: 2px solid var(--line); }
+.ideas div { display: grid; grid-template-columns: minmax(180px, 280px) 1fr; gap: 8px 24px; padding: 14px 0; border-bottom: 2px solid var(--line); }
+@media (max-width: 560px) { .ideas div { grid-template-columns: 1fr; } }
+.takeaway { background: var(--accent); color: #14213D; border-radius: 16px; padding: 28px; font-family: var(--display); font-size: clamp(22px, 3.4vw, 28px); font-weight: 600; line-height: 1.3; }
+.quiz { display: flex; flex-direction: column; gap: 20px; }
+.q { background: var(--panel); border-radius: 14px; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; }
+.q fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.q legend { font-weight: 700; margin-bottom: 8px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 12px; border-radius: 10px; border: 2px solid var(--line); background: var(--bg); cursor: pointer; }
+.opt:hover { border-color: var(--accent); }
+.opt input { margin-top: 6px; accent-color: var(--accent); }
+.feedback { font-weight: 700; }
+.feedback.yes { color: var(--good); }
+.feedback.no { color: var(--bad); }
+footer { color: var(--muted); font-size: 15px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+<p class="eyebrow">Computer Science · AI Lessons · Review</p>
+<h1>How a Spam Filter Decides</h1>
+<p class="lead">Missed our AI lessons? Work through this page from top to bottom. It takes about 15 minutes, and everything on it is interactive.</p>
+<nav aria-label="Sections">
+<ol>
+<li><a href="#features">What AI measures</a></li>
+<li><a href="#rule">The rule</a></li>
+<li><a href="#code">The code</a></li>
+<li><a href="#tune">Tune it</a></li>
+<li><a href="#strategy">The strategy</a></li>
+<li><a href="#limit">Why only 8?</a></li>
+<li><a href="#ideas">Big ideas</a></li>
+<li><a href="#check">Check yourself</a></li>
+</ol>
+</nav>
+</header>
+
+<section id="features">
+<p class="eyebrow">Part 1</p>
+<h2>AI decides by measuring things</h2>
+<p><b>AI</b> is a program that makes a decision that usually takes human judgment. Your email app’s spam filter is one example. It can’t read an email the way you do. It can only measure things about it. Each thing it measures is called a <b>feature</b>.</p>
+<div class="cards">
+<div class="card"><h3>Links</h3><p>How many links are in the email?</p><span class="tag">int links</span></div>
+<div class="card"><h3>ALL CAPS</h3><p>How many words are in ALL CAPS?</p><span class="tag">int caps</span></div>
+<div class="card"><h3>Known sender</h3><p>Do you know who sent it? 1 = yes, 0 = no.</p><span class="tag">int known</span></div>
+</div>
+</section>
+
+<section id="rule">
+<h2>The rule turns features into a score</h2>
+<p>Each feature gets a <b>weight</b>: how much it counts. Links and ALL CAPS push the score up. Knowing the sender pulls it down. If the score is greater than the <b>threshold</b>, the email is spam.</p>
+<div class="rule">score = <b>3</b> × links + <b>2</b> × caps − <b>5</b> × known<br>SPAM if score &gt; <b>6</b></div>
+<div class="panel" aria-labelledby="calc-title">
+<h3 id="calc-title">Try it: score an email</h3>
+<div class="inputs">
+<div class="field"><label id="l-links">Links</label><div class="stepper" role="group" aria-labelledby="l-links"><button type="button" data-f="links" data-d="-1" aria-label="Fewer links">−</button><output id="v-links">3</output><button type="button" data-f="links" data-d="1" aria-label="More links">+</button></div></div>
+<div class="field"><label id="l-caps">ALL CAPS words</label><div class="stepper" role="group" aria-labelledby="l-caps"><button type="button" data-f="caps" data-d="-1" aria-label="Fewer caps words">−</button><output id="v-caps">4</output><button type="button" data-f="caps" data-d="1" aria-label="More caps words">+</button></div></div>
+<div class="field"><label id="l-known">Known sender (0 or 1)</label><div class="stepper" role="group" aria-labelledby="l-known"><button type="button" data-f="known" data-d="-1" aria-label="Unknown sender">−</button><output id="v-known">0</output><button type="button" data-f="known" data-d="1" aria-label="Known sender">+</button></div></div>
+</div>
+<div class="result" aria-live="polite"><span id="calc-math">3×3 + 2×4 − 5×0 = 17</span><span id="calc-verdict" class="verdict spam">SPAM</span></div>
+<p>This starts on “You WON a FREE iPhone!!! ACT NOW”: 3 links, 4 ALL CAPS words, from a stranger. Change the numbers and watch the score.</p>
+</div>
+</section>
+
+<section id="code">
+<h2>The code: spam.c</h2>
+<p>In class we wrote this in C. The whole “intelligence” is one calculation and one comparison.</p>
+<pre><code>#include &lt;cs50.h&gt;
+#include &lt;stdio.h&gt;
+
+int main(void)
+{
+    int links = get_int("Number of links: ");
+    int caps = get_int("Words in ALL CAPS: ");
+    int known = get_int("Do you know the sender? (1 = yes, 0 = no): ");
+
+    int score = 3 * links + 2 * caps - 5 * known;
+
+    if (score &gt; 6)
+    {
+        printf("SPAM\n");
+    }
+    else
+    {
+        printf("Not spam\n");
+    }
+}</code></pre>
+<p>To run it on cs50.dev: save the file, type <code>make spam</code>, then <code>./spam</code>.</p>
+</section>
+
+<section id="tune">
+<p class="eyebrow">Part 2</p>
+<h2>Tune the AI</h2>
+<p>We tested the rule on 10 emails with known right answers. The starting rule gets only 6 right. Move the sliders to change the weights and threshold, and see how many you can get right. This is what our <code>tune.c</code> program did in class.</p>
+<div class="panel">
+<div class="sliders">
+<div class="slider"><label for="w-links">Links weight <span id="o-links">3</span></label><input type="range" id="w-links" min="0" max="15" value="3"></div>
+<div class="slider"><label for="w-caps">Caps weight <span id="o-caps">2</span></label><input type="range" id="w-caps" min="0" max="15" value="2"></div>
+<div class="slider"><label for="w-known">Known weight <span id="o-known">5</span></label><input type="range" id="w-known" min="0" max="20" value="5"></div>
+<div class="slider"><label for="w-thr">Threshold <span id="o-thr">6</span></label><input type="range" id="w-thr" min="-5" max="30" value="6"></div>
+</div>
+<div class="rule" id="tune-rule">score = <b>3</b> × links + <b>2</b> × caps − <b>5</b> × known, SPAM if score &gt; <b>6</b></div>
+<div class="scoreboard">
+<div class="big" aria-live="polite"><span id="correct">6</span> <small>out of 10 right</small></div>
+<button type="button" class="btn" id="reset">Reset to the starting rule</button>
+</div>
+<p class="msg" id="tune-msg" hidden></p>
+<div class="tablewrap">
+<table>
+<thead><tr><th>#</th><th>Email</th><th class="num">Links</th><th class="num">Caps</th><th class="num">Known</th><th>Answer</th><th class="num">Score</th><th>Result</th></tr></thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+</div>
+</section>
+
+<section id="strategy">
+<h2>The strategy: fix one wrong email at a time</h2>
+<p>Changing numbers at random is just guessing. Instead, pick one WRONG email and ask two questions.</p>
+<ol class="steps">
+<li><h3>What kind of mistake?</h3><p><b>Missed spam:</b> its score must go up, or the threshold must go down. <b>False alarm:</b> its score must go down, or the threshold must go up.</p></li>
+<li><h3>What does the email have?</h3><p>Only weights for features the email actually has can change its score. A weight times 0 is still 0.</p></li>
+</ol>
+<p>Then change one number, predict the new score, and check what else broke. Click each step below to watch it happen in the tuner above.</p>
+<div class="tablewrap">
+<table>
+<thead><tr><th>Step</th><th>Reasoning</th><th>Change</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td><button type="button" class="btn" data-step="0">Start</button></td><td>Wrong: 3 and 7 are missed spam, 4 and 8 are false alarms.</td><td>3, 2, 5, threshold 6</td><td>6 / 10</td></tr>
+<tr><td><button type="button" class="btn" data-step="1">Fix 4</button></td><td>Email 4 is a false alarm from a known sender. Make “known” count more.</td><td>known 5 → 6</td><td>7 / 10</td></tr>
+<tr><td><button type="button" class="btn" data-step="2">Fix 3</button></td><td>Email 3 is missed spam with a score of 3. Lower the threshold.</td><td>threshold 6 → 2</td><td>7 / 10, but email 4 broke again</td></tr>
+<tr><td><button type="button" class="btn" data-step="3">Fix 4 again</button></td><td>Email 4’s known sender needs to count even more.</td><td>known 6 → 10</td><td><b>8 / 10</b></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="limit">
+<h2>Why can’t anyone get 9?</h2>
+<p>Look at emails 7 and 10. They have exactly the same features, so every rule gives them exactly the same score. But one is spam and one isn’t, so any rule gets one of them wrong.</p>
+<div class="pair">
+<div class="card"><h3>7. Friend’s hacked account</h3><span class="tag">links 1 · caps 0 · known 1</span><p><b>Answer: Spam</b></p></div>
+<div class="card"><h3>10. Coach’s game schedule</h3><span class="tag">links 1 · caps 0 · known 1</span><p><b>Answer: Not spam</b></p></div>
+</div>
+<p>The best possible is 8 out of 10. That limit comes from what the rule can measure, not from how hard you try.</p>
+</section>
+
+<section id="ideas">
+<h2>What this says about training AI</h2>
+<div class="ideas">
+<div><h3>No AI is perfect</h3><p>Real AI systems have error rates too. Some mistakes can’t be tuned away.</p></div>
+<div><h3>It only knows what it measures</h3><p>Same features, same score. Better features help more than better tuning.</p></div>
+<div><h3>Every rule chooses its mistakes</h3><p>To get 8, your rule had to get two emails wrong. A school email in spam and a scam in your inbox aren’t equally bad. People decide which mistakes are acceptable.</p></div>
+<div><h3>Humans stay in the loop</h3><p>Some cases, like a hacked friend’s account, need your judgment.</p></div>
+</div>
+<p class="takeaway">Training an AI isn’t finding a perfect rule. It’s choosing what to measure, and deciding which mistakes you can live with.</p>
+</section>
+
+<section id="check">
+<p class="eyebrow">Check yourself</p>
+<h2>Four quick questions</h2>
+<div class="quiz" id="quiz"></div>
+</section>
+
+<section id="next">
+<h2>Your turn</h2>
+<div class="panel">
+<p>Download <code>tune.c</code> from Google Classroom and try it out on the 10 new emails shown in the attached PNG. Change the four numbers at the top, save, then run <code>make tune</code> and <code>./tune</code>.</p>
+<p><b>What’s the maximum number you can get correct? Why can’t you do better?</b></p>
+</div>
+</section>
+
+<footer>Computer Science · AI Lessons Review</footer>
+</div>
+
+<script>
+(function () {
+  // ----- Score calculator -----
+  var vals = { links: 3, caps: 4, known: 0 };
+  var limits = { links: [0, 20], caps: [0, 20], known: [0, 1] };
+  function calc() {
+    var s = 3 * vals.links + 2 * vals.caps - 5 * vals.known;
+    ['links', 'caps', 'known'].forEach(function (k) { document.getElementById('v-' + k).textContent = vals[k]; });
+    document.getElementById('calc-math').textContent = '3×' + vals.links + ' + 2×' + vals.caps + ' − 5×' + vals.known + ' = ' + s;
+    var v = document.getElementById('calc-verdict');
+    if (s > 6) { v.textContent = 'SPAM'; v.className = 'verdict spam'; }
+    else { v.textContent = 'Not spam'; v.className = 'verdict ok'; }
+  }
+  document.querySelectorAll('.stepper button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var f = b.getAttribute('data-f'), d = Number(b.getAttribute('data-d'));
+      vals[f] = Math.min(limits[f][1], Math.max(limits[f][0], vals[f] + d));
+      calc();
+    });
+  });
+  calc();
+
+  // ----- Tuner with the 10 Day 1 emails -----
+  var emails = [
+    ['“You WON a FREE iPhone!!! ACT NOW”', 3, 4, 0, 1],
+    ['“Lunch tomorrow?” from a friend', 0, 0, 1, 0],
+    ['“Your package is delayed, track it here”', 1, 0, 0, 1],
+    ['Newsletter from a club you joined', 4, 0, 1, 0],
+    ['Teacher: “URGENT: TEST moved to FRIDAY”', 0, 3, 1, 0],
+    ['“CLAIM your PRIZE NOW”', 1, 3, 0, 1],
+    ['Friend’s hacked account: “lol is this you?”', 1, 0, 1, 1],
+    ['“Register for our FALL college info session”', 2, 1, 0, 0],
+    ['“Your FREE gift card is WAITING”', 2, 2, 0, 1],
+    ['Coach: “here’s the game schedule”', 1, 0, 1, 0]
+  ];
+  var ids = ['links', 'caps', 'known', 'thr'];
+  var start = [3, 2, 5, 6];
+  var path = [[3, 2, 5, 6], [3, 2, 6, 6], [3, 2, 6, 2], [3, 2, 10, 2]];
+  function get(id) { return Number(document.getElementById('w-' + id).value); }
+  function set(w) { ids.forEach(function (id, i) { document.getElementById('w-' + id).value = w[i]; }); tune(); }
+  function tune() {
+    var wl = get('links'), wc = get('caps'), wk = get('known'), t = get('thr');
+    document.getElementById('o-links').textContent = wl;
+    document.getElementById('o-caps').textContent = wc;
+    document.getElementById('o-known').textContent = wk;
+    document.getElementById('o-thr').textContent = t;
+    document.getElementById('tune-rule').innerHTML = 'score = <b>' + wl + '</b> × links + <b>' + wc + '</b> × caps − <b>' + wk + '</b> × known, SPAM if score &gt; <b>' + t + '</b>';
+    var rows = '', correct = 0;
+    emails.forEach(function (e, i) {
+      var s = wl * e[1] + wc * e[2] - wk * e[3];
+      var guess = s > t ? 1 : 0;
+      var right = guess === e[4];
+      if (right) correct++;
+      var res = right
+        ? '<span class="pill right">RIGHT</span>'
+        : '<span class="pill wrong">WRONG</span><span class="why">' + (e[4] === 1 ? 'missed spam: score needs to go UP' : 'false alarm: score needs to go DOWN') + '</span>';
+      rows += '<tr><td class="num">' + (i + 1) + '</td><td>' + e[0] + '</td><td class="num">' + e[1] + '</td><td class="num">' + e[2] + '</td><td class="num">' + e[3] + '</td><td>' + (e[4] ? '<b>Spam</b>' : 'Not spam') + '</td><td class="num">' + s + '</td><td>' + res + '</td></tr>';
+    });
+    document.getElementById('tbody').innerHTML = rows;
+    document.getElementById('correct').textContent = correct;
+    var msg = document.getElementById('tune-msg');
+    if (correct >= 8) {
+      msg.hidden = false;
+      msg.textContent = 'You reached 8, the best possible score. Now try for 9. If you can’t, can you explain why? (Hint: look closely at emails 7 and 10.)';
+    } else { msg.hidden = true; }
+  }
+  ids.forEach(function (id) { document.getElementById('w-' + id).addEventListener('input', tune); });
+  document.getElementById('reset').addEventListener('click', function () { set(start); });
+  document.querySelectorAll('[data-step]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      set(path[Number(b.getAttribute('data-step'))]);
+      document.getElementById('tune').scrollIntoView();
+    });
+  });
+  tune();
+
+  // ----- Quiz -----
+  var qs = [
+    { q: 'Using the starting rule (3, 2, 5, threshold 6), an email has 2 links, 1 ALL CAPS word, and a known sender. What does the rule decide?',
+      o: ['Score 3, Not spam', 'Score 13, SPAM', 'Score 8, SPAM', 'Score 3, SPAM'], a: 0,
+      e: '3×2 + 2×1 − 5×1 = 3, and 3 is not greater than 6, so it’s Not spam.' },
+    { q: 'An email is a false alarm. What has to happen to fix it?',
+      o: ['Its score has to go up', 'Its score has to go down, or the threshold has to go up', 'Add a new email', 'Nothing can fix a false alarm'], a: 1,
+      e: 'A false alarm was called spam but isn’t. Its score has to drop below the threshold, or the threshold has to rise above its score.' },
+    { q: 'Email 3 has 1 link, 0 ALL CAPS words, and an unknown sender. Which change can NOT affect its score?',
+      o: ['Raising the links weight', 'Lowering the threshold', 'Raising the caps weight', 'Lowering the links weight'], a: 2,
+      e: 'Email 3 has 0 caps words, and any weight times 0 is still 0. Changing the threshold doesn’t change its score, but it can still change the decision.' },
+    { q: 'Why can’t any rule get both email 7 and email 10 right?',
+      o: ['The weights are too small', 'They have the same features, so they always get the same score', 'The threshold is wrong', 'The program has a bug'], a: 1,
+      e: 'Both have links 1, caps 0, known 1. Same features means same score means same decision, but they have different right answers.' }
+  ];
+  var quiz = document.getElementById('quiz');
+  qs.forEach(function (item, qi) {
+    var div = document.createElement('div'); div.className = 'q';
+    var html = '<fieldset><legend>' + (qi + 1) + '. ' + item.q + '</legend>';
+    item.o.forEach(function (opt, oi) {
+      html += '<label class="opt" for="q' + qi + 'o' + oi + '"><input type="radio" name="q' + qi + '" id="q' + qi + 'o' + oi + '" value="' + oi + '"><span>' + opt + '</span></label>';
+    });
+    html += '</fieldset><p class="feedback" aria-live="polite" id="fb' + qi + '"></p>';
+    div.innerHTML = html;
+    quiz.appendChild(div);
+    div.querySelectorAll('input').forEach(function (inp) {
+      inp.addEventListener('change', function () {
+        var fb = document.getElementById('fb' + qi);
+        if (Number(inp.value) === item.a) { fb.className = 'feedback yes'; fb.textContent = 'Correct. ' + item.e; }
+        else { fb.className = 'feedback no'; fb.textContent = 'Not quite. Try again.'; }
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
